@@ -1,0 +1,132 @@
+version: rosclaw.eurdf/v0.1
+robot_id: tb4_lab_003
+display_name: TurtleBot 4 Lab Robot
+base_model: TurtleBot 4
+
+sources:
+  urdf: package://turtlebot4_description/urdf/standard/turtlebot4.urdf
+  meshes: package://turtlebot4_description/meshes
+  calibration: ./calibration/
+
+frames:
+  map: map
+  odom: odom
+  base: base_link
+  dock: dock_link
+
+body_parts:
+  mobile_base:
+    type: diff_drive_base
+    links:
+      - base_link
+      - wheel_left_link
+      - wheel_right_link
+      - caster_left_link
+      - caster_right_link
+    joints:
+      - wheel_left_joint
+      - wheel_right_joint
+    sensors:
+      - lidar
+      - imu
+      - cliff_sensor
+    actuators:
+      - diff_drive_controller
+
+  sensor_tower:
+    type: sensor_cluster
+    links:
+      - rplidar_link
+      - oakd_link
+      - oakd_rgb_camera_link
+    sensors:
+      - oakd_rgbd
+      - lidar
+
+  manipulator:
+    type: arm
+    links:
+      - arm_base_link
+      - arm_link1
+      - arm_link2
+      - gripper_link
+    joints:
+      - arm_joint1
+      - arm_joint2
+      - gripper_joint
+    sensors:
+      - arm_camera
+    actuators:
+      - arm_controller
+      - gripper_controller
+
+sensors:
+  oakd_rgbd:
+    type: rgbd_camera
+    frame_id: oakd_rgb_camera_link
+    topics:
+      rgb: /oakd/rgb/image_raw
+      depth: /oakd/stereo/image_raw
+      info: /oakd/rgb/camera_info
+      pointcloud: /oakd/stereo/points
+    health:
+      min_fps: 15
+      max_latency_ms: 100
+
+  lidar:
+    type: lidar_2d
+    frame_id: rplidar_link
+    topics:
+      scan: /scan
+    health:
+      min_hz: 8
+
+  imu:
+    type: imu
+    frame_id: imu_link
+    topics:
+      data: /imu/data
+
+  cliff_sensor:
+    type: cliff
+    frame_id: base_link
+    topics:
+      state: /cliff
+
+  arm_camera:
+    type: rgb_camera
+    frame_id: arm_camera_link
+    topics:
+      rgb: /arm_camera/image_raw
+      info: /arm_camera/camera_info
+
+actuators:
+  diff_drive_controller:
+    type: diff_drive
+    command_topic: /cmd_vel
+    feedback_topics:
+      odom: /odom
+    limits:
+      max_linear_x: 0.3
+      max_angular_z: 1.5
+
+  arm_controller:
+    type: joint_group
+    command_topic: /arm_controller/command
+    feedback_topics:
+      states: /arm/joint_states
+
+  gripper_controller:
+    type: gripper
+    command_topic: /gripper_command
+
+runtime:
+  ros:
+    distro: humble
+    required_topics:
+      - /tf
+      - /tf_static
+      - /joint_states
+      - /diagnostics
+      - /cmd_vel
+      - /odom

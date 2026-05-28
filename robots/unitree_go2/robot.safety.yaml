@@ -1,0 +1,28 @@
+version: rosclaw.safety/v0.1
+robot_id: go2_lab_001
+
+emergency_stop:
+  topic: /emergency_stop
+  mode: latched
+
+speed_limits:
+  default:
+    linear_x: 0.8
+    angular_z: 1.2
+  near_human:
+    linear_x: 0.2
+    angular_z: 0.4
+  patrol:
+    linear_x: 0.4
+    angular_z: 0.6
+
+forbidden_zones:
+  source: rosclaw-memory://maps/lab_forbidden_zones
+
+approval_required:
+  - skill: enter_restricted_zone
+  - skill: interact_with_human
+  - skill: open_door
+
+policy_events:
+  publish_topic: /rosclaw/safety_events

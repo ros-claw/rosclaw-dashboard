@@ -1,0 +1,77 @@
+version: rosclaw.skills/v0.1
+robot_id: tb4_lab_003
+
+skills:
+  navigate_to:
+    type: navigation
+    description: Navigate to a target pose.
+    requires:
+      sensors:
+        - lidar
+        - oakd_rgbd
+        - imu
+      actuators:
+        - diff_drive_controller
+      frames:
+        - map
+        - odom
+        - base_link
+    ros:
+      action: /navigate_to_pose
+    safety:
+      approval_required: false
+      max_speed: 0.3
+
+  pick_and_place:
+    type: manipulation
+    description: Pick up an object and place it elsewhere.
+    requires:
+      sensors:
+        - oakd_rgbd
+        - arm_camera
+      actuators:
+        - diff_drive_controller
+        - arm_controller
+        - gripper_controller
+      frames:
+        - base_link
+        - arm_base_link
+    ros:
+      service: /rosclaw/pick_and_place
+    safety:
+      approval_required: true
+
+  follow_person:
+    type: navigation
+    description: Follow a detected person.
+    requires:
+      sensors:
+        - oakd_rgbd
+      actuators:
+        - diff_drive_controller
+      frames:
+        - odom
+        - base_link
+    ros:
+      action: /follow_person
+    safety:
+      approval_required: false
+      max_speed: 0.2
+
+  dock:
+    type: navigation
+    description: Dock to the charging station.
+    requires:
+      sensors:
+        - lidar
+        - oakd_rgbd
+      actuators:
+        - diff_drive_controller
+      frames:
+        - map
+        - dock
+    ros:
+      action: /dock
+    safety:
+      approval_required: false
+      max_speed: 0.15

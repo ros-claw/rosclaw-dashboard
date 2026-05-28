@@ -1,0 +1,112 @@
+version: rosclaw.eurdf/v0.1
+robot_id: go2_lab_001
+display_name: Unitree Go2 Lab Robot
+base_model: Unitree Go2
+
+sources:
+  urdf: package://go2_description/urdf/go2.urdf
+  meshes: package://go2_description/meshes
+  calibration: ./calibration/
+
+frames:
+  map: map
+  odom: odom
+  base: base_link
+
+body_parts:
+  locomotion:
+    type: legged_base
+    links:
+      - FL_hip
+      - FR_hip
+      - RL_hip
+      - RR_hip
+      - FL_thigh
+      - FR_thigh
+      - RL_thigh
+      - RR_thigh
+      - FL_calf
+      - FR_calf
+      - RL_calf
+      - RR_calf
+      - FL_foot
+      - FR_foot
+      - RL_foot
+      - RR_foot
+    joints:
+      - FL_hip_joint
+      - FR_hip_joint
+      - RL_hip_joint
+      - RR_hip_joint
+      - FL_thigh_joint
+      - FR_thigh_joint
+      - RL_thigh_joint
+      - RR_thigh_joint
+      - FL_calf_joint
+      - FR_calf_joint
+      - RL_calf_joint
+      - RR_calf_joint
+    actuators:
+      - leg_controller
+
+  perception_head:
+    type: sensor_cluster
+    links:
+      - head_link
+      - front_camera_link
+    sensors:
+      - front_rgbd
+      - lidar
+
+sensors:
+  front_rgbd:
+    type: rgbd_camera
+    frame_id: front_camera_link
+    topics:
+      rgb: /camera/color/image_raw
+      depth: /camera/depth/image_raw
+      info: /camera/color/camera_info
+    health:
+      min_fps: 15
+      max_latency_ms: 120
+
+  lidar:
+    type: lidar_2d
+    frame_id: lidar_link
+    topics:
+      scan: /scan
+    health:
+      min_hz: 8
+
+  imu:
+    type: imu
+    frame_id: imu_link
+    topics:
+      data: /imu/data
+
+actuators:
+  velocity_base:
+    type: mobile_base
+    command_topic: /cmd_vel
+    feedback_topics:
+      odom: /odom
+    limits:
+      max_linear_x: 0.8
+      max_angular_z: 1.2
+
+  leg_controller:
+    type: joint_group
+    command_topic: /joint_group_controller/command
+    feedback_topics:
+      states: /joint_states
+
+runtime:
+  ros:
+    distro: humble
+    required_topics:
+      - /tf
+      - /tf_static
+      - /joint_states
+      - /diagnostics
+      - /cmd_vel
+      - /odom

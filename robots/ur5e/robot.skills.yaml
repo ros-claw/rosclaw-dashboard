@@ -1,0 +1,72 @@
+version: rosclaw.skills/v0.1
+robot_id: ur5e_lab_002
+
+skills:
+  reach_pose:
+    type: manipulation
+    description: Move arm to a target pose.
+    requires:
+      sensors:
+        - force_sensor
+      actuators:
+        - arm_controller
+      frames:
+        - base_link
+        - tool0
+    ros:
+      action: /follow_joint_trajectory
+    safety:
+      approval_required: false
+      max_velocity: 1.0
+
+  grasp_object:
+    type: manipulation
+    description: Grasp an object using gripper.
+    requires:
+      sensors:
+        - wrist_camera
+        - force_sensor
+      actuators:
+        - arm_controller
+        - gripper_controller
+      frames:
+        - base_link
+        - tool0
+    ros:
+      service: /rosclaw/grasp_object
+    safety:
+      approval_required: true
+      max_force: 80.0
+
+  place_object:
+    type: manipulation
+    description: Place a held object at a target location.
+    requires:
+      sensors:
+        - force_sensor
+      actuators:
+        - arm_controller
+        - gripper_controller
+      frames:
+        - base_link
+        - tool0
+    ros:
+      service: /rosclaw/place_object
+    safety:
+      approval_required: false
+
+  inspect_surface:
+    type: perception
+    description: Use wrist camera to inspect a surface.
+    requires:
+      sensors:
+        - wrist_camera
+      actuators:
+        - arm_controller
+      frames:
+        - base_link
+        - tool0
+    ros:
+      service: /rosclaw/inspect_surface
+    safety:
+      approval_required: false

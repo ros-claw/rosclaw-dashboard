@@ -1,0 +1,18 @@
+{
+  "name": "@rosclaw/mcap-indexer",
+  "version": "0.1.0",
+  "description": "MCAP file indexer for ROSClaw Dashboard",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch"
+  },
+  "dependencies": {
+    "@mcap/core": "^2.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.2"
+  }
+}

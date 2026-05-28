@@ -1,0 +1,32 @@
+version: rosclaw.safety/v0.1
+robot_id: tb4_lab_003
+
+emergency_stop:
+  topic: /emergency_stop
+  mode: latched
+
+speed_limits:
+  default:
+    linear_x: 0.3
+    angular_z: 1.5
+  near_human:
+    linear_x: 0.15
+    angular_z: 0.5
+  dock_approach:
+    linear_x: 0.1
+    angular_z: 0.3
+
+forbidden_zones:
+  source: rosclaw-memory://maps/tb4_forbidden_zones
+
+cliff_protection:
+  enabled: true
+  stop_on_cliff: true
+
+approval_required:
+  - skill: pick_and_place
+  - skill: enter_elevator
+  - skill: interact_with_human
+
+policy_events:
+  publish_topic: /rosclaw/safety_events

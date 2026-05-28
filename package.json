@@ -1,0 +1,21 @@
+{
+  "name": "rosclaw-dashboard",
+  "version": "0.1.0",
+  "private": true,
+  "description": "ROSClaw Dashboard - e-URDF-native control plane for Physical AI",
+  "scripts": {
+    "dev:web": "pnpm --filter @rosclaw/web dev",
+    "dev:api": "pnpm --filter @rosclaw/api dev",
+    "build": "pnpm -r build",
+    "lint": "pnpm -r lint",
+    "test": "pnpm -r test",
+    "validate": "pnpm --filter @rosclaw/eurdf-parser validate",
+    "inspect": "pnpm --filter @rosclaw/eurdf-parser inspect",
+    "generate-layout": "pnpm --filter @rosclaw/foxglove-layout-generator generate"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.7.0"
+  },
+  "packageManager": "pnpm@9.0.0"
+}

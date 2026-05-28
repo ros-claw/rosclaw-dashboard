@@ -1,0 +1,15 @@
+{
+  "name": "@rosclaw/sdk",
+  "version": "0.1.0",
+  "description": "ROSClaw Dashboard SDK for external integrations",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.2"
+  }
+}

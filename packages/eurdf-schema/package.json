@@ -1,0 +1,14 @@
+{
+  "name": "@rosclaw/eurdf-schema",
+  "version": "0.1.0",
+  "description": "e-URDF schema definitions for ROSClaw",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0"
+  }
+}

@@ -1,0 +1,99 @@
+version: rosclaw.eurdf/v0.1
+robot_id: ur5e_lab_002
+display_name: UR5e Collaborative Arm
+base_model: Universal Robots UR5e
+
+sources:
+  urdf: package://ur_description/urdf/ur5e.urdf
+  meshes: package://ur_description/meshes
+  calibration: ./calibration/
+
+frames:
+  world: world
+  base: base_link
+  tool0: tool0
+  ee: wrist_3_link
+
+body_parts:
+  manipulator:
+    type: articulated_arm
+    links:
+      - base_link
+      - shoulder_link
+      - upper_arm_link
+      - forearm_link
+      - wrist_1_link
+      - wrist_2_link
+      - wrist_3_link
+      - flange
+      - tool0
+    joints:
+      - shoulder_pan_joint
+      - shoulder_lift_joint
+      - elbow_joint
+      - wrist_1_joint
+      - wrist_2_joint
+      - wrist_3_joint
+    actuators:
+      - arm_controller
+
+  end_effector:
+    type: gripper
+    links:
+      - gripper_base
+      - left_finger
+      - right_finger
+    joints:
+      - left_finger_joint
+      - right_finger_joint
+    sensors:
+      - wrist_camera
+      - force_sensor
+    actuators:
+      - gripper_controller
+
+sensors:
+  wrist_camera:
+    type: rgb_camera
+    frame_id: wrist_camera_link
+    topics:
+      rgb: /wrist_camera/image_raw
+      info: /wrist_camera/camera_info
+    health:
+      min_fps: 10
+      max_latency_ms: 150
+
+  force_sensor:
+    type: force_torque
+    frame_id: tool0
+    topics:
+      wrench: /wrench
+    health:
+      min_hz: 100
+
+actuators:
+  arm_controller:
+    type: joint_trajectory
+    command_topic: /joint_trajectory_controller/command
+    feedback_topics:
+      states: /joint_states
+    limits:
+      max_velocity: 3.15
+      max_acceleration: 10.0
+
+  gripper_controller:
+    type: gripper
+    command_topic: /gripper_command
+    feedback_topics:
+      state: /gripper_state
+    limits:
+      max_force: 120.0
+
+runtime:
+  ros:
+    distro: humble
+    required_topics:
+      - /tf
+      - /tf_static
+      - /joint_states
+      - /diagnostics

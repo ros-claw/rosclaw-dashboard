@@ -1,0 +1,73 @@
+version: rosclaw.skills/v0.1
+robot_id: go2_lab_001
+
+skills:
+  navigate_to:
+    type: navigation
+    description: Navigate to a target pose in the map.
+    requires:
+      sensors:
+        - lidar
+        - front_rgbd
+        - imu
+      actuators:
+        - velocity_base
+      frames:
+        - map
+        - odom
+        - base_link
+    ros:
+      action: /navigate_to_pose
+    safety:
+      approval_required: false
+      max_speed: 0.6
+
+  inspect_object:
+    type: perception
+    description: Inspect an object with camera and VLM.
+    requires:
+      sensors:
+        - front_rgbd
+      memory:
+        - object_memory
+        - semantic_map
+    ros:
+      service: /rosclaw/inspect_object
+    safety:
+      approval_required: false
+
+  patrol_route:
+    type: navigation
+    description: Patrol a predefined route.
+    requires:
+      sensors:
+        - lidar
+        - front_rgbd
+      actuators:
+        - velocity_base
+      frames:
+        - map
+        - odom
+    ros:
+      action: /patrol_route
+    safety:
+      approval_required: false
+      max_speed: 0.4
+
+  return_home:
+    type: navigation
+    description: Return to the charging dock.
+    requires:
+      sensors:
+        - lidar
+        - front_rgbd
+      actuators:
+        - velocity_base
+      frames:
+        - map
+        - odom
+    ros:
+      action: /return_to_dock
+    safety:
+      approval_required: false
+      max_speed: 0.5

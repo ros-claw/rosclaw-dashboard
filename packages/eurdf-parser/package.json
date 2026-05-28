@@ -1,0 +1,27 @@
+{
+  "name": "@rosclaw/eurdf-parser",
+  "version": "0.1.0",
+  "description": "e-URDF YAML parser and validator",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "eurdf-validate": "dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "validate": "node dist/cli.js validate",
+    "inspect": "node dist/cli.js inspect",
+    "generate-layout": "node dist/cli.js generate-layout"
+  },
+  "dependencies": {
+    "@rosclaw/eurdf-schema": "workspace:*",
+    "js-yaml": "^4.1.0",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@types/js-yaml": "^4.0.9",
+    "@types/node": "^22.0.0",
+    "typescript": "^5.7.0"
+  }
+}

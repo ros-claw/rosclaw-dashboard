@@ -1,0 +1,67 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build outputs
+dist/
+build/
+.out/
+.next/
+__pycache__/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Data
+data/
+*.db
+*.duckdb
+*.mcap
+
+# Screenshots (generated locally)
+*.png
+
+# Understand Anything
+.understand-anything/
+
+# Virtual environments
+.venv/
+venv/
+
+# Screenshots (generated locally)
+*.png
+
+# Understand Anything
+.understand-anything/
+
+# Sub-repositories (managed separately)
+any4lerobot/
+foxglove-sdk/
+lerobot/
+mcap/
+mission-control/
+ros-foxglove-bridge/
+
+# Robot meshes (large files)
+robots/**/meshes/*.stl
+robots/**/meshes/*.dae
+robots/**/meshes/*.obj
