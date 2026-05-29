@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from core.config import settings
 from models.database import init_db
-from routers import robots_router, missions_router, mcap_router, skills_router, memory_router, safety_router, events_router, runtime_router
+from routers import robots_router, missions_router, mcap_router, skills_router, memory_router, safety_router, events_router, runtime_router, providers_router, episodes_router
 
 app = FastAPI(
     title=settings.app_name,
@@ -29,6 +29,8 @@ app.include_router(memory_router, prefix="/api")
 app.include_router(safety_router, prefix="/api")
 app.include_router(events_router, prefix="/api")
 app.include_router(runtime_router, prefix="/api")
+app.include_router(providers_router, prefix="/api")
+app.include_router(episodes_router, prefix="/api")
 
 
 @app.on_event("startup")

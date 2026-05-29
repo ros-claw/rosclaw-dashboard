@@ -6,12 +6,16 @@ import { useDashboardStore } from '@/stores/dashboard';
 
 const navItems = [
   { href: '/', label: 'Robot Registry', icon: 'R' },
-  { href: '/embodiment', label: 'Embodiment', icon: 'E' },
+  { href: '/runtime', label: 'Runtime', icon: 'RT' },
+  { href: '/providers', label: 'Providers', icon: 'P' },
+  { href: '/events', label: 'Event Bus', icon: 'EV' },
+  { href: '/episodes', label: 'Episodes', icon: 'EP' },
   { href: '/missions', label: 'Missions', icon: 'M' },
-  { href: '/mcap', label: 'MCAP Replay', icon: 'P' },
   { href: '/skills', label: 'Skills', icon: 'S' },
+  { href: '/mcap', label: 'MCAP Replay', icon: 'MP' },
   { href: '/memory', label: 'Memory', icon: 'Me' },
   { href: '/safety', label: 'Safety', icon: 'Sa' },
+  { href: '/embodiment', label: 'Embodiment', icon: 'E' },
 ];
 
 export default function DashboardShell({ children }: { children: React.ReactNode }) {

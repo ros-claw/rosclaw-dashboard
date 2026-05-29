@@ -52,4 +52,16 @@ export const api = {
     rules: () => fetchApi('/api/safety/rules'),
     toggleRule: (id: string) => fetchApi(`/api/safety/rules/${id}/toggle`, { method: 'POST' }),
   },
+  providers: {
+    list: () => fetchApi('/api/providers'),
+    get: (id: string) => fetchApi(`/api/providers/${id}`),
+  },
+  episodes: {
+    list: () => fetchApi('/api/episodes'),
+    trace: (id: string) => fetchApi(`/api/episodes/${id}/trace`),
+  },
+  runtime: {
+    list: () => fetchApi('/api/runtime'),
+    status: (id: string) => fetchApi(`/api/runtime/${id}/status`),
+  },
 };

@@ -7,15 +7,50 @@ import DashboardShell from '@/components/DashboardShell';
 
 export default function RobotRegistryPage() {
   const [robots, setRobots] = useState<any[]>([]);
+  const [missions, setMissions] = useState<any[]>([]);
+  const [skills, setSkills] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.robots.list().then(setRobots).finally(() => setLoading(false));
+    Promise.all([
+      api.robots.list(),
+      api.missions.list(),
+      api.skills.list(),
+    ]).then(([r, m, s]) => {
+      setRobots(r);
+      setMissions(m);
+      setSkills(s);
+      setLoading(false);
+    });
   }, []);
+
+  const onlineCount = robots.filter((r: any) => r.status === 'online').length;
 
   return (
     <DashboardShell>
-      <div className="space-y-4">
+      <div className="space-y-6">
+        {/* Overview stats */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="bg-white rounded-lg border border-slate-200 p-4">
+            <p className="text-sm text-slate-500">Robots</p>
+            <p className="text-2xl font-bold text-slate-800">{robots.length}</p>
+            <p className="text-xs text-emerald-600">{onlineCount} online</p>
+          </div>
+          <div className="bg-white rounded-lg border border-slate-200 p-4">
+            <p className="text-sm text-slate-500">Missions</p>
+            <p className="text-2xl font-bold text-slate-800">{missions.length}</p>
+            <p className="text-xs text-slate-400">{missions.filter((m: any) => m.status === 'running').length} running</p>
+          </div>
+          <div className="bg-white rounded-lg border border-slate-200 p-4">
+            <p className="text-sm text-slate-500">Skills</p>
+            <p className="text-2xl font-bold text-slate-800">{skills.length}</p>
+          </div>
+          <div className="bg-white rounded-lg border border-slate-200 p-4">
+            <p className="text-sm text-slate-500">Status</p>
+            <p className="text-2xl font-bold text-emerald-600">Operational</p>
+          </div>
+        </div>
+
         <div className="flex items-center justify-between">
           <p className="text-sm text-slate-500">{robots.length} robot{robots.length !== 1 && 's'} registered</p>
           <button className="px-4 py-2 bg-rosclaw-600 text-white text-sm rounded hover:bg-rosclaw-700">+ Import Robot</button>

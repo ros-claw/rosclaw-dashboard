@@ -6,6 +6,9 @@ from .memory import router as memory_router
 from .safety import router as safety_router
 from .events import router as events_router
 from .runtime import router as runtime_router
+from .providers import router as providers_router
+from .episodes import router as episodes_router
 
 __all__ = ["robots_router", "missions_router", "mcap_router", "skills_router",
-           "memory_router", "safety_router", "events_router", "runtime_router"]
+           "memory_router", "safety_router", "events_router", "runtime_router",
+           "providers_router", "episodes_router"]
