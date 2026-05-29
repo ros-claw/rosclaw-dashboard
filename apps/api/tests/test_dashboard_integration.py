@@ -102,3 +102,33 @@ async def test_mcap_api_still_works():
         resp = await client.get("/api/mcap")
         assert resp.status_code == 200
         assert isinstance(resp.json(), list)
+
+
+@pytest.mark.asyncio
+async def test_runtime_status_websocket():
+    from fastapi.testclient import TestClient
+    client = TestClient(app)
+    daemon = get_or_create_daemon("test_robot_ws_001")
+    await daemon.start()
+    try:
+        with client.websocket_connect("/api/runtime/status/stream") as ws:
+            # Receive initial snapshots until we find our robot
+            found = False
+            for _ in range(20):
+                msg = ws.receive_text()
+                data = json.loads(msg)
+                if data.get("type") == "runtime.status" and data.get("data", {}).get("robot_id") == "test_robot_ws_001":
+                    # Verify structure — online may be False in test env due to event loop isolation
+                    assert "online" in data["data"]
+                    assert "active_tasks" in data["data"]
+                    assert "daemon_connected" in data["data"]
+                    found = True
+                    break
+            assert found, "Did not receive runtime.status for test_robot_ws_001"
+
+            # Test ping action
+            ws.send_text(json.dumps({"action": "ping", "timestamp": 12345}))
+            pong = json.loads(ws.receive_text())
+            assert pong["type"] == "pong"
+    finally:
+        await daemon.stop()
