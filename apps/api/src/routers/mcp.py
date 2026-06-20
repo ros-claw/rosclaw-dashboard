@@ -5,6 +5,8 @@ through a small set of stable tools. It is intentionally thin: heavy lifting is
 delegated to the existing robots, providers, runs and memory routers.
 """
 
+import json
+
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
@@ -41,8 +43,29 @@ _MCP_TOOLS = [
         "parameters": {"type": "object", "properties": {}},
     },
     {
+        "name": "list_runs",
+        "description": "List recent practice runs with summaries.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "limit": {"type": "integer", "default": 10},
+            },
+        },
+    },
+    {
+        "name": "get_run_failures",
+        "description": "Get failure events for a practice run.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "run_id": {"type": "string"},
+            },
+            "required": ["run_id"],
+        },
+    },
+    {
         "name": "run_sandbox_task",
-        "description": "Run a sandbox task for a robot.",
+        "description": "Run a sandbox task for a robot and return a safety decision.",
         "parameters": {
             "type": "object",
             "properties": {
@@ -101,6 +124,8 @@ def call_mcp_tool(call: ToolCall, db: Session = Depends(get_db)):
     handler = {
         "list_robots": _list_robots,
         "list_providers": _list_providers,
+        "list_runs": _list_runs,
+        "get_run_failures": _get_run_failures,
         "run_sandbox_task": _run_sandbox_task,
         "query_memory": _query_memory,
         "explain_failure": _explain_failure,
@@ -140,6 +165,20 @@ def _list_providers(_arguments: dict, _db: Session) -> dict:
     return {"providers": providers}
 
 
+def _list_runs(arguments: dict, db: Session) -> dict:
+    limit = arguments.get("limit", 10)
+    runs, total = run_indexer.list_runs(db, limit=limit)
+    return {"runs": [r.model_dump() for r in runs], "total": total}
+
+
+def _get_run_failures(arguments: dict, _db: Session) -> dict:
+    run_id = arguments.get("run_id")
+    if not run_id:
+        raise HTTPException(status_code=400, detail="run_id is required")
+    failures = run_indexer.get_failures(run_id)
+    return {"run_id": run_id, "failures": [f.model_dump() for f in failures]}
+
+
 def _run_sandbox_task(arguments: dict, db: Session) -> dict:
     robot_id = arguments.get("robot_id")
     task = arguments.get("task")
@@ -149,14 +188,47 @@ def _run_sandbox_task(arguments: dict, db: Session) -> dict:
     robot = db.query(Robot).filter(Robot.id == robot_id).first()
     if not robot:
         raise HTTPException(status_code=404, detail="Robot not found")
+
+    decision, risk_score, reason = _evaluate_sandbox(parameters)
     return {
         "robot_id": robot_id,
         "task": task,
         "parameters": parameters,
-        "decision": "ALLOW",
+        "decision": decision,
+        "risk_score": risk_score,
+        "reason": reason,
         "sandbox_replay_id": f"sandbox://{robot_id}/{task}",
-        "notes": "Sandbox validation passed (mock).",
+        "notes": f"Sandbox decision {decision} (mock heuristic).",
     }
+
+
+def _evaluate_sandbox(parameters: dict) -> tuple[str, float, str]:
+    """Simple heuristic sandbox evaluator for MCP demo tasks."""
+    searchable = json.dumps(parameters).lower()
+    risk = 0.0
+    reasons = []
+
+    if "speed" in parameters and isinstance(parameters["speed"], (int, float)):
+        if parameters["speed"] > 2.0:
+            risk += 0.5
+            reasons.append("speed exceeds safe threshold")
+    if "force" in parameters and isinstance(parameters["force"], (int, float)):
+        if parameters["force"] > 80:
+            risk += 0.3
+            reasons.append("force exceeds safe threshold")
+    if any(k in searchable for k in ["collision", "out_of_bounds", "unsafe", "blocked"]):
+        risk += 0.5
+        reasons.append("unsafe keyword detected")
+    if "workspace" in searchable and "boundary" in searchable:
+        risk += 0.2
+        reasons.append("workspace boundary concern")
+
+    risk = round(min(risk, 1.0), 2)
+    if risk >= 0.5:
+        return "BLOCK", risk, "; ".join(reasons) if reasons else "high risk heuristic"
+    if risk > 0.0:
+        return "MODIFY", risk, "; ".join(reasons) if reasons else "low risk heuristic"
+    return "ALLOW", risk, "No obvious hazards detected."
 
 
 def _query_memory(arguments: dict, db: Session) -> dict:
@@ -187,14 +259,15 @@ def _explain_failure(arguments: dict, _db: Session) -> dict:
     }
 
 
-def _compile_asset_bundle(arguments: dict, _db: Session) -> dict:
+def _compile_asset_bundle(arguments: dict, db: Session) -> dict:
     sdk_doc = arguments.get("sdk_doc")
     target = arguments.get("target", "mcp_server")
     if not sdk_doc:
         raise HTTPException(status_code=400, detail="sdk_doc is required")
-    return {
-        "target": target,
-        "bundle_id": f"bundle_{hash(sdk_doc) & 0xFFFFFFFF:08x}",
-        "files": ["mcp_server.py", "skill_manifest.json", "provider_manifest.json", "tests/test_sdk.py", "README.md"],
-        "status": "generated",
-    }
+    # Delegate to the Forge router so validation, staging and memory are consistent.
+    from routers import forge as forge_router
+    result = forge_router.compile_bundle(
+        forge_router.CompileRequest(sdk_doc=sdk_doc, target=target, staging=True),
+        db,
+    )
+    return result.model_dump()

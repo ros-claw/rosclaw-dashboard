@@ -6,7 +6,7 @@
 
 ## 1. 本次开发范围
 
-本次 PR 在 **Dashboard → Physical Trace Viewer** P1 能力之上，进一步补齐《ROSClaw_v1.0_深入验收指南》中可在 dashboard repo 内闭环的 L0/L2/L4/L5 验收差距：系统状态聚合、MCP 工具网关、Memory 失败解释、How 恢复建议、Forge bundle 生成与校验。
+本次 PR 在 **Dashboard → Physical Trace Viewer** P1 能力之上，进一步补齐《ROSClaw_v1.0_深入验收指南》中可在 dashboard repo 内闭环的 L0/L2/L4/L5 验收差距：系统状态聚合、MCP 工具网关、Memory 失败解释、How 恢复建议、Forge bundle 生成与校验、Practice episode 结构、Sandbox/Firewall 可观测性。
 
 ### 1.1 后端能力
 
@@ -20,11 +20,13 @@
 | 静态资源 | `GET /api/runs/{run_id}/media/{path:path}`、curves、trajectory 接口 | `apps/api/src/routers/runs.py` |
 | 导出任务 | `POST /api/export`、`GET /api/export/{job_id}`、`GET /api/export`，支持 rlds / lerobot / failure_case / skill_candidate | `apps/api/src/routers/export.py`、`apps/api/src/services/export_jobs.py` |
 | 实时事件 | WebSocket `/api/runs/live` 推送新增 trace 事件 | `apps/api/src/routers/runs.py` |
+| **Episode 结构** | `RunSummary` / `RunDetail` 扩展 P0 episode 字段：`episode_id`、`task_id`、`trace_id`、`agent_request`、`provider_trace`、`sandbox_result`、`runtime_action`、`critic_result`、`memory_write_result`、`artifact_uri` | `apps/api/src/models/schemas.py`、`apps/api/src/services/run_indexer.py` |
 | **系统状态** | `GET /api/status` 聚合 runtime、event_bus、seekdb、registry、mcp_gateway、provider_router、sandbox、practice、memory、dashboard 健康状态 | `apps/api/src/routers/status.py` |
-| **MCP 工具网关** | `GET /api/mcp/tools`、`POST /api/mcp/call`，提供 `list_robots`、`list_providers`、`run_sandbox_task`、`query_memory`、`explain_failure`、`compile_asset_bundle` | `apps/api/src/routers/mcp.py` |
-| **Memory 解释** | `POST /api/memory/explain` 读取运行失败、生成“发生了什么/为什么失败”的语义解释并写入 episodic memory | `apps/api/src/routers/memory.py` |
-| **How 恢复** | `POST /api/how/recovery` 基于失败类型生成恢复建议与参数补丁并写入 procedural memory | `apps/api/src/routers/how.py` |
-| **Forge 生成/校验** | `POST /api/forge/compile`、`POST /api/forge/validate`、`GET /api/forge/bundles`：生成 MCP server / skill package / provider manifest / e-URDF patch / sandbox spec bundle，执行 Critic 校验并 staging | `apps/api/src/routers/forge.py` |
+| **MCP 工具网关** | `GET /api/mcp/tools`、`POST /api/mcp/call`，提供 `list_robots`、`list_providers`、`list_runs`、`get_run_failures`、`run_sandbox_task`、`query_memory`、`explain_failure`、`compile_asset_bundle` | `apps/api/src/routers/mcp.py` |
+| **Memory 解释** | `POST /api/memory/explain` 读取运行失败、关联事件、相似历史、manifest 中的 sandbox/provider 信息，生成“发生了什么/为什么失败”的语义解释并写入 episodic memory | `apps/api/src/routers/memory.py` |
+| **How 恢复** | `POST /api/how/recovery` 基于失败类型、关联事件与历史 procedural memory 生成恢复建议与参数补丁并写入 procedural memory | `apps/api/src/routers/how.py` |
+| **Forge 生成/校验** | `POST /api/forge/compile`、`POST /api/forge/validate`、`GET /api/forge/bundles`、`GET /api/forge/bundles/{bundle_id}`、`POST /api/forge/bundles/{bundle_id}/validate`：生成 5 类 bundle，执行 Critic 校验（含 target 必备文件检查），通过校验后写入 staging | `apps/api/src/routers/forge.py` |
+| **防火墙拦截** | `GET /api/safety/blocks` 扫描 practice runs，汇总 sandbox/firewall `BLOCK` 事件与 manifest 级 `BLOCK` 决策 | `apps/api/src/routers/safety.py` |
 
 ### 1.2 前端能力
 
@@ -38,25 +40,28 @@
 | 回放面板 | Video、Curves（Recharts）、Trajectory、SandboxState | `apps/web/src/components/replay/*` |
 | 导出 UI | RLDS / LeRobot / Failure Case / Skill Candidate 一键发起导出并轮询状态 | `apps/web/src/components/export/ExportPanel.tsx` |
 | 实时模式 | 运行列表页可切换 Live，WebSocket 追加事件 | `apps/web/app/runs/page.tsx` |
-| **系统状态卡片** | Robot Registry 首页展示 `/api/status` 整体健康度与模块网格 | `apps/web/app/page.tsx` |
-| **失败分析增强** | FailureAnalysisPanel 新增 “Ask Memory” 与 “Get Recovery Hint” 按钮 | `apps/web/src/components/trace/FailureAnalysisPanel.tsx` |
-| **Forge 页面** | `/forge` 页面：粘贴 SDK 描述、选择 target、编译并展示校验结果、列出已生成 bundle | `apps/web/app/forge/page.tsx` |
+| 系统状态卡片 | Robot Registry 首页展示 `/api/status` 整体健康度与模块网格 | `apps/web/app/page.tsx` |
+| 失败分析增强 | FailureAnalysisPanel 新增 “Ask Memory” 与 “Get Recovery Hint” 按钮 | `apps/web/src/components/trace/FailureAnalysisPanel.tsx` |
+| **Sandbox Replay** | `/sandbox` 页面：列出含 sandbox 决策的练习运行，展示 decision/risk_score/reason/checks/replay_id | `apps/web/app/sandbox/page.tsx` |
+| **Firewall Blocks** | `/safety` 页面新增 Firewall Blocks 面板，展示 BLOCK 事件、原因、risk、replay | `apps/web/app/safety/page.tsx` |
+| **Memory Browser** | `/memory` 页面增强：按 robot/type 过滤、Explain 问答表单、相似历史展示、类型统计 | `apps/web/app/memory/page.tsx` |
+| **Forge Bundle Viewer** | `/forge` 页面增强：bundle 列表搜索、bundle 详情、文件树、内容预览、校验 check  drill-down | `apps/web/app/forge/page.tsx` |
 
 ### 1.3 共享包与工程
 
 - `packages/timeline-core/src/index.ts`：扩展 `TraceEvent`、`ReplayManifestMedia` 与辅助函数（`groupByTrack`、`findFailures`、`findRelated` 等）。
 - `apps/web/tailwind.config.js`：修复 content 路径，包含 `app/` 与 `components/`。
 - `apps/web/package.json`：新增 `@rosclaw/timeline-core`、`zustand`、`recharts`、`@xyflow/react`、`@tanstack/react-query` 等依赖。
-- `apps/web/src/lib/api.ts`：新增 `status`、`mcp`、`how`、`forge` 客户端方法。
-- `apps/web/src/components/DashboardShell.tsx`：导航栏新增 `Forge` 入口。
+- `apps/web/src/lib/api.ts`：新增 `status`、`mcp`、`how`、`forge`（含 `get`）、`safety.blocks()` 客户端方法。
+- `apps/web/src/components/DashboardShell.tsx`：导航栏新增 `Sandbox Replay` 入口。
 
 ## 2. 测试结果
 
 | 测试层级 | 命令 | 结果 |
 | --- | --- | --- |
-| 后端单元/集成测试 | `PYTHONPATH=src pytest apps/api/tests` | **46 passed** |
+| 后端单元/集成测试 | `PYTHONPATH=src pytest apps/api/tests` | **52 passed** |
 | timeline-core 构建 | `pnpm --filter @rosclaw/timeline-core build` | **成功** |
-| 前端类型检查 | `cd apps/web && ./node_modules/.bin/tsc --noEmit` | **clean** |
+| 前端类型检查 | `npx tsc -p apps/web/tsconfig.json --noEmit` | **clean** |
 | 前端单元测试 | `cd apps/web && ./node_modules/.bin/vitest run` | **6 passed** |
 | E2E 测试 | `apps/web/e2e/trace-viewer.spec.ts` | **未配置**（当前仓库无 Playwright e2e 目录与 spec 文件） |
 
@@ -70,6 +75,9 @@
 6. **pnpm / Node 版本不匹配**：绕过 pnpm，直接调用本地二进制（`./node_modules/.bin/tsc`、vitest、playwright）。
 7. **Forge 校验绕过**：生成 `server.py` 时硬编码 safety 文本导致“应被拦截”的 bundle 通过校验；已移除硬编码注释，使校验真实依赖 SDK 输入是否包含 safety/firewall/approval/limit/constraint 关键词。
 8. **Forge 安全用例失败**：安全 SDK 输入补充 safety 关键词，确保校验策略与安全用例一致。
+9. **Memory page 模板字面量损坏**：写入 `apps/web/app/memory/page.tsx` 时产生多余 `}`，导致 TypeScript 解析失败；已修复。
+10. **Forge revalidate 不一致**：staging 后的文件不再包含原始 SDK 文本，导致重新校验时 safety 检查失败；生成 bundle 时新增 `SDK.md` 保留 SDK 原文，使 compile 与 revalidate 结果一致。
+11. **新增 blocked fixture**：新增 `golden_arm_blocked` 练习运行 fixture，专门验证 `GET /api/safety/blocks` 对 manifest 级与事件级 BLOCK 的聚合。
 
 ## 3. 性能与可扩展性说明
 
@@ -80,8 +88,8 @@
 - **回放同步**：前端通过 `requestAnimationFrame` 轮询 `replayStore.currentTime`，CPU 占用低，但视频 seek 精度受浏览器解码影响。
 - **导出任务**：当前为同步执行线程（后台 asyncio task），适合低并发；后续可接入 Celery / RQ 以支持队列与重试。
 - **MCP 网关**：当前为薄层 HTTP 代理，工具实现为内存/数据库查询；后续可由真实 `rosclaw` CLI / Runtime 暴露原生 MCP server 替代。
-- **Memory / How**：当前为基于规则的字典匹配与参数补丁，适合覆盖常见失败模式；后续可接入 LLM-based 根因分析与策略生成。
-- **Forge**：当前为模板生成 + 关键词 Critic 校验；后续应与真实 `sdk_to_mcp` / Asset Forge 编译器、签名与 staging install 流程对接。
+- **Memory / How**：当前为基于规则的字典匹配、关联事件搜索与历史 memory 匹配；已加入相似历史检索与置信度计算，后续可接入 LLM-based 根因分析与策略生成。
+- **Forge**：当前为模板生成 + 关键词 Critic 校验；已加入 target 必备文件检查，后续应与真实 `sdk_to_mcp` / Asset Forge 编译器、签名与 staging install 流程对接。
 
 ## 4. 已知限制
 
@@ -96,14 +104,14 @@
 | 验收层 | 指南要求 | 当前状态 |
 | --- | --- | --- |
 | L0 安装启动 | `rosclaw init / doctor / start` 全绿 | **部分涉及**：Dashboard 内提供 `/api/status` 聚合健康度，可展示 runtime / event_bus / seekdb / registry / mcp_gateway / sandbox / practice / memory / dashboard 模块状态；`rosclaw` CLI 本身的 init/doctor/start 不在本 repo 范围 |
-| L1 模块契约 | 各模块 API 契约 | **部分涉及**：runs / replay / export / status / mcp / memory / how / forge API 已定义 |
-| L2 Claude Code 接入 | MCP tools 可调用 ROSClaw | **已涉及**：`/api/mcp/tools` 与 `/api/mcp/call` 暴露 6 个稳定工具，Claude Code 可通过 HTTP 调用 |
+| L1 模块契约 | 各模块 API 契约 | **部分涉及**：runs / replay / export / status / mcp / memory / how / forge / safety API 已定义 |
+| L2 Claude Code 接入 | MCP tools 可调用 ROSClaw | **已涉及**：`/api/mcp/tools` 与 `/api/mcp/call` 暴露 8 个稳定工具，Claude Code 可通过 HTTP 调用 |
 | L3 单机器人任务 | 小车 PID / 机械臂 reach / 抓取 | **未涉及**：只有 mock fixture |
-| L4 失败恢复与记忆 | Memory 解释失败、How 恢复、第二轮改进 | **已涉及**：`/api/memory/explain` 与 `/api/how/recovery` 基于失败事件生成解释与参数补丁并持久化到 Memory；UI 已提供入口 |
-| L5 自扩展 | Forge 生成 bundle、Critic validation | **已涉及**：`/api/forge/compile` 生成 5 类 bundle，`/api/forge/validate` 执行 Critic 校验并拦截缺少 safety/firewall 约束的 bundle，通过校验后写入 staging |
-| Dashboard 验收 | 完整 trace、事件流、replay | **基本满足**：可加载练习运行、展示多轨时间轴、回放、失败跳转、导出、系统状态、MCP 调用、Memory/How 分析、Forge 生成 |
+| L4 失败恢复与记忆 | Memory 解释失败、How 恢复、第二轮改进 | **已涉及**：`/api/memory/explain` 与 `/api/how/recovery` 基于失败事件、关联事件、相似历史生成解释与参数补丁并持久化到 Memory；UI 已提供入口 |
+| L5 自扩展 | Forge 生成 bundle、Critic validation | **已涉及**：`/api/forge/compile` 生成 5 类 bundle，`/api/forge/validate` 与 `/api/forge/bundles/{id}/validate` 执行 Critic 校验（含 target 必备文件）并拦截缺少 safety/firewall 约束的 bundle，通过校验后写入 staging |
+| Dashboard 验收 | 完整 trace、事件流、replay | **基本满足**：可加载练习运行、展示多轨时间轴、回放、失败跳转、导出、系统状态、MCP 调用、Memory/How 分析、Forge 生成、Sandbox Replay、Firewall Blocks |
 
-**结论**：本次 PR 在 P1 Trace Viewer 基础上，闭环了 Dashboard 侧可实现的 L0 状态、L2 MCP 工具、L4 Memory/How、L5 Forge 验收能力。L3 真实机器人任务与物理仿真、以及 `rosclaw` CLI 本身的 L0 命令仍需要 Runtime / Embodiment / CLI 仓库后续补齐。
+**结论**：本次 PR 在 P1 Trace Viewer 基础上，闭环了 Dashboard 侧可实现的 L0 状态、L2 MCP 工具、L4 Memory/How、L5 Forge 验收能力，并补齐了 Practice episode 结构与 Sandbox/Firewall 可观测性。L3 真实机器人任务与物理仿真、以及 `rosclaw` CLI 本身的 L0 命令仍需要 Runtime / Embodiment / CLI 仓库后续补齐。
 
 ## 6. 提交建议
 

@@ -116,6 +116,70 @@ def list_bundles(db: Session = Depends(get_db)):
     return {"bundles": bundles}
 
 
+@router.get("/bundles/{bundle_id}")
+def get_bundle(bundle_id: str, db: Session = Depends(get_db)):
+    entry = db.query(MemoryEntry).filter(
+        MemoryEntry.source_skill == "forge_compile",
+        MemoryEntry.id == f"forge_{bundle_id}",
+    ).first()
+    if not entry:
+        raise HTTPException(status_code=404, detail="Bundle not found")
+    try:
+        content = json.loads(entry.content_json or "{}")
+    except json.JSONDecodeError:
+        content = {}
+    staging_path = Path(settings.export_dir) / "staging" / bundle_id
+    files = content.get("files", [])
+    file_contents = []
+    if staging_path.exists():
+        for rel_path in files:
+            full_path = staging_path / rel_path
+            if full_path.is_file() and full_path.is_relative_to(staging_path):
+                file_contents.append({
+                    "path": rel_path,
+                    "content": full_path.read_text(encoding="utf-8"),
+                    "size": full_path.stat().st_size,
+                })
+    return {
+        "bundle_id": content.get("bundle_id", bundle_id),
+        "target": content.get("target"),
+        "status": "validated" if content.get("validation", {}).get("valid") else "blocked",
+        "files": file_contents,
+        "validation": content.get("validation", {}),
+        "created_at": entry.timestamp.isoformat() if entry.timestamp else None,
+    }
+
+
+@router.post("/bundles/{bundle_id}/validate", response_model=ValidationResponse)
+def revalidate_bundle(bundle_id: str, db: Session = Depends(get_db)):
+    entry = db.query(MemoryEntry).filter(
+        MemoryEntry.source_skill == "forge_compile",
+        MemoryEntry.id == f"forge_{bundle_id}",
+    ).first()
+    if not entry:
+        raise HTTPException(status_code=404, detail="Bundle not found")
+    try:
+        content = json.loads(entry.content_json or "{}")
+    except json.JSONDecodeError:
+        content = {}
+    target = content.get("target", "unknown")
+    staging_path = Path(settings.export_dir) / "staging" / bundle_id
+    files = []
+    if staging_path.exists():
+        for rel_path in content.get("files", []):
+            full_path = staging_path / rel_path
+            if full_path.is_file() and full_path.is_relative_to(staging_path):
+                files.append({"path": rel_path, "content": full_path.read_text(encoding="utf-8")})
+    validation = _validate_bundle(target, files)
+    return ValidationResponse(
+        bundle_id=bundle_id,
+        valid=validation["valid"],
+        checks=validation["checks"],
+        errors=validation["errors"],
+        warnings=validation["warnings"],
+    )
+
+
 def _bundle_id(sdk_doc: str, target: str) -> str:
     h = hashlib.sha256(f"{sdk_doc}:{target}".encode()).hexdigest()[:12]
     return f"{target}_{h}"
@@ -125,6 +189,7 @@ def _generate_files(target: str, sdk_doc: str, bundle_id: str) -> list[dict]:
     common = [
         {"path": "README.md", "content": f"# {bundle_id}\n\nGenerated from SDK doc ({len(sdk_doc)} chars).\n"},
         {"path": "manifest.json", "content": json.dumps({"bundle_id": bundle_id, "target": target, "generated_at": _now()}, indent=2)},
+        {"path": "SDK.md", "content": sdk_doc},
     ]
     if target == "mcp_server":
         return common + [
@@ -151,6 +216,15 @@ def _generate_files(target: str, sdk_doc: str, bundle_id: str) -> list[dict]:
     return common
 
 
+_TARGET_REQUIRED_FILES = {
+    "mcp_server": {"server.py"},
+    "skill_package": {"skill.py", "skill_manifest.json"},
+    "provider_manifest": {"provider.yaml"},
+    "eurdf_patch": {"robot.patch.yaml"},
+    "sandbox_spec": {"sandbox_spec.yaml"},
+}
+
+
 def _validate_bundle(target: str, files: list[dict], sdk_doc: str = "") -> dict:
     checks = []
     errors = []
@@ -167,11 +241,16 @@ def _validate_bundle(target: str, files: list[dict], sdk_doc: str = "") -> dict:
     has_safety = bool(re.search(r"\bsafety\b|\bfirewall\b|\bpreemption\b|\bapproval\b|\blimit\b|\bconstraint\b", searchable, re.I))
     has_tests = any("test" in f["path"] for f in files)
 
+    required = _TARGET_REQUIRED_FILES.get(target, set())
+    missing_required = required - paths
+
     checks.append({"name": "readme_present", "passed": has_readme})
     checks.append({"name": "manifest_present", "passed": has_manifest})
     checks.append({"name": "async_or_schema", "passed": has_async or has_manifest})
     checks.append({"name": "safety_or_firewall", "passed": has_safety})
     checks.append({"name": "tests_present", "passed": has_tests})
+    checks.append({"name": "required_files_present", "passed": not missing_required})
+    checks.append({"name": "target_recognized", "passed": target in _TARGET_REQUIRED_FILES})
 
     if not has_readme:
         warnings.append("README.md missing")
@@ -179,6 +258,10 @@ def _validate_bundle(target: str, files: list[dict], sdk_doc: str = "") -> dict:
         errors.append("Safety/firewall constraints missing — bundle blocked from runtime.")
     if not has_tests:
         warnings.append("No tests found")
+    if missing_required:
+        errors.append(f"Missing required files for {target}: {', '.join(sorted(missing_required))}")
+    if target not in _TARGET_REQUIRED_FILES:
+        errors.append(f"Unknown target '{target}'.")
 
     valid = len(errors) == 0
     return {"valid": valid, "checks": checks, "errors": errors, "warnings": warnings}

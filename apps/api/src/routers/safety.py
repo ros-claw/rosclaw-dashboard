@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 
 from models.database import get_db, SafetyAudit, SafetyRule
 from models.schemas import SafetyAuditResponse, SafetyRuleResponse
+from services import run_indexer
 
 router = APIRouter(prefix="/safety", tags=["safety"])
 
@@ -69,3 +70,46 @@ def toggle_rule(rule_id: str, db: Session = Depends(get_db)):
     rule.active = not rule.active
     db.commit()
     return SafetyRuleResponse.model_validate(rule)
+
+
+@router.get("/blocks")
+def list_firewall_blocks():
+    """Scan practice runs for sandbox/firewall BLOCK decisions."""
+    blocks = []
+    for run_id in run_indexer.list_run_ids():
+        manifest = run_indexer._load_manifest(run_id) or {}
+        events, _ = run_indexer.get_events(run_id, limit=10_000)
+        for event in events:
+            payload = event.payload or {}
+            decision = payload.get("decision") or payload.get("sandbox_decision")
+            if decision == "BLOCK" or event.type == "SandboxActionBlocked":
+                blocks.append({
+                    "id": event.id,
+                    "run_id": run_id,
+                    "episode_id": manifest.get("episode_id") or run_id,
+                    "robot_id": event.entity or manifest.get("robot_id"),
+                    "t_rel": event.t_rel,
+                    "decision": "BLOCK",
+                    "reason": payload.get("reason") or payload.get("blocked_reason") or event.summary,
+                    "risk_score": payload.get("risk_score"),
+                    "checks": payload.get("checks") or payload.get("failed_checks"),
+                    "replay_id": payload.get("replay_id") or f"sandbox://{run_id}/{event.id}",
+                    "action_type": payload.get("action_type") or event.type,
+                })
+        sandbox_result = manifest.get("sandbox_result") or {}
+        if sandbox_result.get("decision") == "BLOCK":
+            blocks.append({
+                "id": f"{run_id}_manifest",
+                "run_id": run_id,
+                "episode_id": manifest.get("episode_id") or run_id,
+                "robot_id": manifest.get("robot_id"),
+                "t_rel": 0.0,
+                "decision": "BLOCK",
+                "reason": sandbox_result.get("reason"),
+                "risk_score": sandbox_result.get("risk_score"),
+                "checks": sandbox_result.get("checks"),
+                "replay_id": sandbox_result.get("replay_id") or f"sandbox://{run_id}",
+                "action_type": "sandbox_validation",
+            })
+    blocks.sort(key=lambda b: b["t_rel"], reverse=True)
+    return {"blocks": blocks}

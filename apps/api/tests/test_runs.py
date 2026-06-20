@@ -27,6 +27,15 @@ async def test_get_run_detail(client, run_id):
     assert run["has_media"] is True
     assert run["has_trajectory"] is True
     assert run["has_curves"] is True
+    # P0 episode structure fields
+    assert run["episode_id"] == "ep_0001"
+    assert run["task_id"] == "task_pick_red_cube_001"
+    assert run["trace_id"] == "trace_ep_0001"
+    assert run["artifact_uri"] == "rosclaw://practice/runs/golden_pick_cube_failure"
+    assert run["agent_request"]["goal"] == "Pick red cube from bin A and place on conveyor"
+    assert run["sandbox_result"]["decision"] == "ALLOW"
+    assert run["critic_result"]["success"] is False
+    assert run["memory_write_result"]["episodic_id"] == "memory_explain_evt_failure_001"
 
 
 @pytest.mark.asyncio

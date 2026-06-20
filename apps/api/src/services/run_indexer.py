@@ -95,6 +95,22 @@ def _normalize_event(raw: dict[str, Any], run_id: str, started_at: float) -> dic
     }
 
 
+def _episode_fields(manifest: dict[str, Any]) -> dict[str, Any]:
+    """Extract P0 episode structure fields from manifest."""
+    return {
+        "episode_id": manifest.get("episode_id") or manifest.get("run_id"),
+        "task_id": manifest.get("task_id") or manifest.get("task"),
+        "trace_id": manifest.get("trace_id"),
+        "agent_request": manifest.get("agent_request"),
+        "provider_trace": manifest.get("provider_trace"),
+        "sandbox_result": manifest.get("sandbox_result"),
+        "runtime_action": manifest.get("runtime_action"),
+        "critic_result": manifest.get("critic_result"),
+        "memory_write_result": manifest.get("memory_write_result"),
+        "artifact_uri": manifest.get("artifact_uri"),
+    }
+
+
 def _summarize_run(run_id: str, manifest: dict[str, Any]) -> dict[str, Any]:
     started_at = manifest.get("started_at") or manifest.get("start_ts") or 0.0
     ended_at = manifest.get("ended_at") or manifest.get("end_ts")
@@ -132,7 +148,7 @@ def _summarize_run(run_id: str, manifest: dict[str, Any]) -> dict[str, Any]:
         "has_trajectory": bool(trajectory),
         "has_curves": bool(curves),
         "manifest_path": str(_run_dir(run_id) / "manifest.json"),
-    }
+    } | _episode_fields(manifest)
 
 
 def index_run(db: Session, run_id: str) -> TraceRun:
@@ -212,6 +228,7 @@ def list_runs(
             has_trajectory=bool(manifest.get("trajectory") or manifest.get("robot_trajectory")),
             has_curves=bool(manifest.get("curves")),
             manifest_path=str(_run_dir(row.run_id) / "manifest.json"),
+            **_episode_fields(manifest),
         ))
     return summaries, total
 
@@ -235,6 +252,7 @@ def get_run(db: Session, run_id: str) -> RunDetail:
         has_curves=bool(manifest.get("curves")),
         manifest_path=str(_run_dir(row.run_id) / "manifest.json"),
         manifest=manifest,
+        **_episode_fields(manifest),
     )
 
 

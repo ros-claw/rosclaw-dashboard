@@ -13,6 +13,7 @@ const navItems = [
   { href: '/missions', label: 'Missions', icon: 'M' },
   { href: '/skills', label: 'Skills', icon: 'S' },
   { href: '/mcap', label: 'MCAP Replay', icon: 'MP' },
+  { href: '/sandbox', label: 'Sandbox Replay', icon: 'SB' },
   { href: '/runs', label: 'Practice Runs', icon: 'Tr' },
   { href: '/memory', label: 'Memory', icon: 'Me' },
   { href: '/safety', label: 'Safety', icon: 'Sa' },

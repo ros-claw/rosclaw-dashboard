@@ -1,0 +1,25 @@
+{
+  "run_id": "golden_arm_blocked",
+  "episode_id": "ep_blocked_001",
+  "task_id": "task_reach_table_001",
+  "trace_id": "trace_ep_blocked_001",
+  "robot_id": "ur5e_table_01",
+  "task": "reach over table",
+  "status": "blocked",
+  "started_at": 1716900000.0,
+  "ended_at": 1716900005.0,
+  "duration_sec": 5.0,
+  "agent_request": {"goal": "Reach over table"},
+  "provider_trace": {"provider_id": "skill.reach"},
+  "sandbox_result": {
+    "decision": "BLOCK",
+    "risk_score": 0.85,
+    "reason": "workspace_boundary",
+    "checks": ["workspace", "collision"],
+    "replay_id": "sandbox://golden_arm_blocked"
+  },
+  "runtime_action": null,
+  "critic_result": {"success": false, "score": 0.0},
+  "memory_write_result": null,
+  "artifact_uri": "rosclaw://practice/runs/golden_arm_blocked"
+}

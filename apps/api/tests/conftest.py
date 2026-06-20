@@ -66,3 +66,8 @@ def client():
 @pytest.fixture
 def run_id():
     return "golden_pick_cube_failure"
+
+
+@pytest.fixture
+def blocked_run_id():
+    return "golden_arm_blocked"

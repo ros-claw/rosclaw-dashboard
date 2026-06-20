@@ -90,10 +90,12 @@ export const api = {
     validate: (data: { bundle_id: string; bundle: any }) =>
       fetchApi('/api/forge/validate', { method: 'POST', body: JSON.stringify(data) }) as Promise<any>,
     bundles: () => fetchApi('/api/forge/bundles') as Promise<{ bundles: any[] }>,
+    get: (bundle_id: string) => fetchApi(`/api/forge/bundles/${bundle_id}`) as Promise<any>,
   },
   safety: {
     audits: () => fetchApi('/api/safety/audits'),
     rules: () => fetchApi('/api/safety/rules'),
+    blocks: () => fetchApi('/api/safety/blocks') as Promise<{ blocks: any[] }>,
     toggleRule: (id: string) => fetchApi(`/api/safety/rules/${id}/toggle`, { method: 'POST' }),
   },
   providers: {

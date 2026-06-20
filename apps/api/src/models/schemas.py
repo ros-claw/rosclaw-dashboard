@@ -230,6 +230,9 @@ class EventFilter(BaseModel):
 
 class RunSummary(BaseModel):
     run_id: str
+    episode_id: str | None = None
+    task_id: str | None = None
+    trace_id: str | None = None
     status: str
     robot_id: str | None = None
     task: str | None = None
@@ -243,6 +246,13 @@ class RunSummary(BaseModel):
     has_trajectory: bool = False
     has_curves: bool = False
     manifest_path: str | None = None
+    agent_request: dict[str, Any] | None = None
+    provider_trace: dict[str, Any] | None = None
+    sandbox_result: dict[str, Any] | None = None
+    runtime_action: dict[str, Any] | None = None
+    critic_result: dict[str, Any] | None = None
+    memory_write_result: dict[str, Any] | None = None
+    artifact_uri: str | None = None
 
 
 class RunDetail(RunSummary):
