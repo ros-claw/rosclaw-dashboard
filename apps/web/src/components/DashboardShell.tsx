@@ -17,6 +17,7 @@ const navItems = [
   { href: '/memory', label: 'Memory', icon: 'Me' },
   { href: '/safety', label: 'Safety', icon: 'Sa' },
   { href: '/embodiment', label: 'Embodiment', icon: 'E' },
+  { href: '/forge', label: 'Forge', icon: 'F' },
 ];
 
 export default function DashboardShell({ children }: { children: React.ReactNode }) {

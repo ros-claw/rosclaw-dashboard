@@ -69,6 +69,27 @@ export const api = {
   memory: {
     list: () => fetchApi('/api/memory'),
     stats: () => fetchApi('/api/memory/stats/summary'),
+    explain: (data: { question: string; run_id?: string; robot_id?: string }) =>
+      fetchApi('/api/memory/explain', { method: 'POST', body: JSON.stringify(data) }),
+  },
+  how: {
+    recovery: (data: { run_id: string; failure_event_id?: string }) =>
+      fetchApi('/api/how/recovery', { method: 'POST', body: JSON.stringify(data) }),
+  },
+  status: {
+    get: () => fetchApi('/api/status'),
+  },
+  mcp: {
+    tools: () => fetchApi('/api/mcp/tools'),
+    call: (tool: string, arguments_?: Record<string, any>) =>
+      fetchApi('/api/mcp/call', { method: 'POST', body: JSON.stringify({ tool, arguments: arguments_ || {} }) }),
+  },
+  forge: {
+    compile: (data: { sdk_doc: string; target?: string; staging?: boolean }) =>
+      fetchApi('/api/forge/compile', { method: 'POST', body: JSON.stringify(data) }) as Promise<any>,
+    validate: (data: { bundle_id: string; bundle: any }) =>
+      fetchApi('/api/forge/validate', { method: 'POST', body: JSON.stringify(data) }) as Promise<any>,
+    bundles: () => fetchApi('/api/forge/bundles') as Promise<{ bundles: any[] }>,
   },
   safety: {
     audits: () => fetchApi('/api/safety/audits'),

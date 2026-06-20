@@ -5,10 +5,18 @@ import Link from 'next/link';
 import { api } from '@/lib/api';
 import DashboardShell from '@/components/DashboardShell';
 
+interface SystemStatus {
+  overall: string;
+  service: string;
+  version: string;
+  modules: { name: string; status: string; detail: any }[];
+}
+
 export default function RobotRegistryPage() {
   const [robots, setRobots] = useState<any[]>([]);
   const [missions, setMissions] = useState<any[]>([]);
   const [skills, setSkills] = useState<any[]>([]);
+  const [status, setStatus] = useState<SystemStatus | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -16,10 +24,12 @@ export default function RobotRegistryPage() {
       api.robots.list(),
       api.missions.list(),
       api.skills.list(),
-    ]).then(([r, m, s]) => {
+      api.status.get().catch(() => null),
+    ]).then(([r, m, s, st]) => {
       setRobots(r);
       setMissions(m);
       setSkills(s);
+      setStatus(st);
       setLoading(false);
     });
   }, []);
@@ -29,6 +39,30 @@ export default function RobotRegistryPage() {
   return (
     <DashboardShell>
       <div className="space-y-6">
+        {/* System status */}
+        {status && (
+          <div className="bg-white rounded-lg border border-slate-200 p-4">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="font-medium text-slate-800">System Status</h2>
+              <span className={`px-2 py-0.5 rounded text-xs font-medium ${
+                status.overall === 'healthy' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
+              }`}>
+                {status.overall}
+              </span>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+              {status.modules.map((mod) => (
+                <div key={mod.name} className="text-xs p-2 bg-slate-50 rounded border border-slate-100">
+                  <div className="font-medium text-slate-700">{mod.name}</div>
+                  <div className={mod.status === 'healthy' ? 'text-emerald-600' : 'text-amber-600'}>
+                    {mod.status}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Overview stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="bg-white rounded-lg border border-slate-200 p-4">

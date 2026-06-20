@@ -11,6 +11,12 @@ from .episodes import router as episodes_router
 from .runs import router as runs_router
 from .export import router as export_router
 
+from .status import router as status_router
+from .mcp import router as mcp_router
+from .how import router as how_router
+from .forge import router as forge_router
+
 __all__ = ["robots_router", "missions_router", "mcap_router", "skills_router",
            "memory_router", "safety_router", "events_router", "runtime_router",
-           "providers_router", "episodes_router", "runs_router", "export_router"]
+           "providers_router", "episodes_router", "runs_router", "export_router",
+           "status_router", "mcp_router", "how_router", "forge_router"]
