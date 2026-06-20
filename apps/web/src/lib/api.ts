@@ -1,4 +1,23 @@
+import type {
+  TraceEvent,
+  RunSummary,
+  RunDetail,
+  ReplayManifest,
+  EventFilter,
+  ExportJobCreate,
+  ExportJobStatus,
+} from '@rosclaw/timeline-core';
+
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || '';
+
+function buildQuery(params?: Record<string, string | number | undefined>): string {
+  if (!params) return '';
+  const entries = Object.entries(params).filter(([, v]) => v !== undefined && v !== '');
+  if (entries.length === 0) return '';
+  const qs = new URLSearchParams();
+  for (const [k, v] of entries) qs.set(k, String(v));
+  return `?${qs.toString()}`;
+}
 
 async function fetchApi(path: string, options?: RequestInit) {
   const res = await fetch(`${API_BASE}${path}`, {
@@ -36,6 +55,10 @@ export const api = {
     abort: (id: string) => fetchApi(`/api/missions/${id}/abort`, { method: 'POST' }),
     trace: (id: string) => fetchApi(`/api/missions/${id}/trace`),
   },
+  skills: {
+    list: () => fetchApi('/api/skills'),
+    get: (id: string) => fetchApi(`/api/skills/${id}`),
+  },
   mcap: {
     list: () => fetchApi('/api/mcap'),
     get: (id: string) => fetchApi(`/api/mcap/${id}`),
@@ -63,5 +86,40 @@ export const api = {
   runtime: {
     list: () => fetchApi('/api/runtime'),
     status: (id: string) => fetchApi(`/api/runtime/${id}/status`),
+  },
+  runs: {
+    list: (params?: { status?: string; search?: string; limit?: number; offset?: number }) =>
+      fetchApi(`/api/runs${buildQuery(params)}`),
+    get: (runId: string) => fetchApi(`/api/runs/${runId}`) as Promise<RunDetail>,
+    events: (
+      runId: string,
+      params?: { track?: string; type?: string; severity?: string; limit?: number; offset?: number },
+    ) => fetchApi(`/api/runs/${runId}/events${buildQuery(params)}`),
+    filterEvents: (runId: string, filter: EventFilter) =>
+      fetchApi(`/api/runs/${runId}/events/filter`, {
+        method: 'POST',
+        body: JSON.stringify(filter),
+      }),
+    searchEvents: (runId: string, eventId: string, windowSec = 5.0) =>
+      fetchApi(
+        `/api/runs/${runId}/events/search?event_id=${encodeURIComponent(eventId)}&window_sec=${windowSec}`,
+      ),
+    failures: (runId: string) => fetchApi(`/api/runs/${runId}/failures`),
+    replay: (runId: string) => fetchApi(`/api/runs/${runId}/replay`) as Promise<ReplayManifest>,
+    curves: (runId: string, curveName: string) =>
+      fetchApi(`/api/runs/${runId}/curves/${encodeURIComponent(curveName)}`),
+    trajectory: (runId: string) => fetchApi(`/api/runs/${runId}/trajectory`),
+  },
+  export: {
+    create: (data: ExportJobCreate) =>
+      fetchApi('/api/export', { method: 'POST', body: JSON.stringify(data) }) as Promise<ExportJobStatus>,
+    get: (jobId: string) => fetchApi(`/api/export/${jobId}`) as Promise<ExportJobStatus>,
+    list: (runId?: string) =>
+      fetchApi(`/api/export${buildQuery({ run_id: runId, limit: 100, offset: 0 })}`),
+    downloadUrl: (jobId: string) => `${API_BASE}/api/export/${jobId}/download`,
+  },
+  media: {
+    url: (runId: string, path: string) =>
+      `${API_BASE}/api/runs/${runId}/media/${encodeURIComponent(path)}`,
   },
 };

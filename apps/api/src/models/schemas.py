@@ -1,5 +1,6 @@
 from datetime import datetime
-from typing import Any
+from typing import Any, Literal
+
 from pydantic import BaseModel, ConfigDict
 
 
@@ -189,3 +190,144 @@ class HealthResponse(BaseModel):
 class RobotImportRequest(BaseModel):
     robot_id: str
     directory: str
+
+
+# ── Physical Trace Viewer schemas ───────────────────────────────────────────
+
+TraceTrack = Literal[
+    "task", "agent", "tool", "provider", "sandbox", "runtime", "robot",
+    "critic", "memory", "auto", "failure",
+]
+
+
+class TraceEvent(BaseModel):
+    id: str
+    run_id: str
+    ts: float
+    t_rel: float
+    source: str
+    type: str
+    track: TraceTrack
+    severity: str = "info"
+    title: str
+    summary: str | None = None
+    entity: str | None = None
+    payload: dict[str, Any] | None = None
+    links: list[str] | None = None
+    tags: list[str] | None = None
+
+
+class EventFilter(BaseModel):
+    track: str | None = None
+    severity: str | None = None
+    type: str | None = None
+    entity: str | None = None
+    tag: str | None = None
+    start_t_rel: float | None = None
+    end_t_rel: float | None = None
+    q: str | None = None
+
+
+class RunSummary(BaseModel):
+    run_id: str
+    status: str
+    robot_id: str | None = None
+    task: str | None = None
+    started_at: float | None = None
+    ended_at: float | None = None
+    duration_sec: float | None = None
+    event_count: int = 0
+    failure_count: int = 0
+    tracks: list[str] = []
+    has_media: bool = False
+    has_trajectory: bool = False
+    has_curves: bool = False
+    manifest_path: str | None = None
+
+
+class RunDetail(RunSummary):
+    manifest: dict[str, Any] | None = None
+
+
+class RunListResponse(BaseModel):
+    runs: list[RunSummary]
+    total: int
+
+
+class EventsResponse(BaseModel):
+    run_id: str
+    events: list[TraceEvent]
+    total: int
+    next_cursor: str | None = None
+
+
+class FailureSummary(BaseModel):
+    id: str
+    t_rel: float
+    title: str
+    summary: str | None = None
+    severity: str
+    track: str
+
+
+class FailuresResponse(BaseModel):
+    run_id: str
+    failures: list[FailureSummary]
+
+
+class ReplayManifestMedia(BaseModel):
+    kind: str
+    path: str
+    name: str | None = None
+    url: str
+    mime_type: str | None = None
+    start_t_rel: float | None = None
+    end_t_rel: float | None = None
+
+
+class ReplayManifestCurve(BaseModel):
+    name: str
+    url: str
+    sample_count: int | None = None
+    start_t_rel: float | None = None
+    end_t_rel: float | None = None
+
+
+class ReplayManifestTrajectory(BaseModel):
+    url: str
+    sample_count: int | None = None
+    start_t_rel: float | None = None
+    end_t_rel: float | None = None
+
+
+class ReplayManifest(BaseModel):
+    run_id: str
+    duration_sec: float
+    media: list[ReplayManifestMedia]
+    curves: list[ReplayManifestCurve]
+    trajectory: ReplayManifestTrajectory | None = None
+    sandbox_states: list[dict[str, Any]] | None = None
+    tracks: list[str] = []
+
+
+class ExportJobCreate(BaseModel):
+    run_id: str
+    format: str  # rlds, lerobot, failure_case, skill_candidate
+    params: dict[str, Any] | None = None
+
+
+class ExportJobStatus(BaseModel):
+    job_id: str
+    run_id: str
+    format: str
+    state: str  # queued, running, validating, packaging, completed, failed
+    progress: float = 0.0
+    result_url: str | None = None
+    error: str | None = None
+    created_at: float
+    updated_at: float
+
+
+class ExportJobListResponse(BaseModel):
+    jobs: list[ExportJobStatus]
+    total: int

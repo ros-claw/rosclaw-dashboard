@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from pydantic_settings import BaseSettings
 
 
@@ -9,6 +11,8 @@ class Settings(BaseSettings):
     secret_key: str = "rosclaw-dev-secret-key-change-in-production"
     cors_origins: list[str] = ["http://localhost:3000", "http://127.0.0.1:3000"]
     robots_data_path: str = "../../robots"
+    practice_dir: Path = Path.home() / ".rosclaw" / "practice" / "runs"
+    export_dir: Path = Path.home() / ".rosclaw" / "dashboard" / "exports"
 
     class Config:
         env_prefix = "ROSCLAW_"

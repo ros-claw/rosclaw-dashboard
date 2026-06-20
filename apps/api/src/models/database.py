@@ -1,13 +1,18 @@
 from datetime import datetime
 from sqlalchemy import create_engine, Column, String, DateTime, Boolean, Text, Float, Integer
 from sqlalchemy.orm import declarative_base, sessionmaker
+from sqlalchemy.pool import StaticPool
 
 from core.config import settings
 
-engine = create_engine(
-    settings.database_url,
-    connect_args={"check_same_thread": False} if settings.database_url.startswith("sqlite") else {},
-)
+_engine_kwargs = {}
+if settings.database_url.startswith("sqlite"):
+    _engine_kwargs = {
+        "connect_args": {"check_same_thread": False},
+        "poolclass": StaticPool,
+    }
+
+engine = create_engine(settings.database_url, **_engine_kwargs)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
@@ -146,6 +151,47 @@ class SafetyRule(Base):
     parameters_json = Column(Text, nullable=False)
     active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class TraceRun(Base):
+    __tablename__ = "trace_runs"
+
+    run_id = Column(String, primary_key=True, index=True)
+    status = Column(String, default="unknown")
+    robot_id = Column(String, index=True)
+    task = Column(String)
+    started_at = Column(Float)
+    ended_at = Column(Float)
+    duration_sec = Column(Float)
+    event_count = Column(Integer, default=0)
+    failure_count = Column(Integer, default=0)
+    tracks = Column(Text, default="")
+    manifest_json = Column(Text)
+    indexed_at = Column(DateTime, default=datetime.utcnow)
+
+
+class ReplaySession(Base):
+    __tablename__ = "replay_sessions"
+
+    session_id = Column(String, primary_key=True, index=True)
+    run_id = Column(String, nullable=False, index=True)
+    state_json = Column(Text)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class ExportJob(Base):
+    __tablename__ = "export_jobs"
+
+    job_id = Column(String, primary_key=True, index=True)
+    run_id = Column(String, nullable=False, index=True)
+    format = Column(String, nullable=False)
+    state = Column(String, default="queued")
+    progress = Column(Float, default=0.0)
+    result_path = Column(String)
+    error = Column(Text)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
 def init_db():

@@ -8,7 +8,9 @@ from .events import router as events_router
 from .runtime import router as runtime_router
 from .providers import router as providers_router
 from .episodes import router as episodes_router
+from .runs import router as runs_router
+from .export import router as export_router
 
 __all__ = ["robots_router", "missions_router", "mcap_router", "skills_router",
            "memory_router", "safety_router", "events_router", "runtime_router",
-           "providers_router", "episodes_router"]
+           "providers_router", "episodes_router", "runs_router", "export_router"]
