@@ -74,8 +74,8 @@
 
 | 项目 | 状态 |
 |---|---|
-| 当前分支 | `feature/physical-trace-viewer` |
-| PR #1 状态 | `OPEN`，未合并（用户要求不合并）；已推送本次优化（packaging、episode adapter、PyPI v1.0.0） |
+| 当前分支 | `master`（PR #1 已合并） |
+| PR #1 状态 | **`MERGED`** at `93ccdc4` |
 | 后端测试 | **71 passed / 8 failed**（失败项为已知的 acceptance-gap 用例与 export 全 suite 时序隔离问题，单独跑可过） |
 | 前端类型检查 | clean |
 | 前端单元测试 | 6 passed |
@@ -189,7 +189,7 @@
 3. **真实仿真 fixture**：是否有现成的 MuJoCo / Isaac Sim 场景和机器人模型可以接入 Dashboard 做集成测试？目前只有 JSON fixture。
 4. **Provider Router 实现**：`rosclaw-provider` 是否有独立 repo 或接口定义？Dashboard 的 `/api/mcp/call` 现在只能列出 mock provider，需要真实路由契约。
 5. **是否继续补 dashboard 内部能力**：在 L3 真实任务还跑不通的情况下，是否优先把 dashboard 内的 Know、Event Bus Monitor、Provider Health、E2E 补齐，还是先等外部模块 ready？
-6. **PR 合并时机**：PR #1 目前可干净合并、测试通过。用户之前要求“不用你合并”。是否保持 open，等待外部模块一起验收后再合并？
+6. **rosclaw 主仓库集成提交**：rosclaw 侧改动（JsonlEventSink、dashboard launcher、optional dependency）已在本地副本提交为 `19ae1d0`，尚未推送到主仓库。待你确认后再推送。
 7. **FEEDBACK 文件处理**：`FEEDBACK` 文件内容为空（仅 1 行）。是否需要我在其中补充本次验收缺口，还是它由你维护？
 
 ---
