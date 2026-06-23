@@ -9,8 +9,8 @@ import sys
 import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
-from main import app
-from services.agent_daemon import get_or_create_daemon, EventBus
+from rosclaw_dashboard.main import app
+from rosclaw_dashboard.services.agent_daemon import get_or_create_daemon, EventBus
 
 
 @pytest.fixture

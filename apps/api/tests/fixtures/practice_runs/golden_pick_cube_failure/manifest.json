@@ -1,0 +1,75 @@
+{
+  "run_id": "golden_pick_cube_failure",
+  "episode_id": "ep_0001",
+  "task_id": "task_pick_red_cube_001",
+  "trace_id": "trace_ep_0001",
+  "status": "failure",
+  "robot_id": "ur5e_table_01",
+  "task": "Pick red cube from bin A and place on conveyor",
+  "started_at": 1716900000.0,
+  "ended_at": 1716900042.5,
+  "duration_sec": 42.5,
+  "tracks": ["task", "agent", "tool", "provider", "sandbox", "runtime", "robot", "critic", "memory", "failure"],
+  "failure_events": ["evt_failure_001"],
+  "agent_request": {
+    "goal": "Pick red cube from bin A and place on conveyor",
+    "robot_id": "ur5e_table_01",
+    "constraints": ["avoid collision with bin walls", "grip force < 50N"]
+  },
+  "provider_trace": {
+    "vlm": "object_grounding:red_cube@bin_A",
+    "skill": "grasp_candidate:top_down",
+    "critic": "pre_grasp_check:PASS"
+  },
+  "sandbox_result": {
+    "decision": "ALLOW",
+    "risk_score": 0.12,
+    "checks": ["workspace", "collision", "joint_limits"]
+  },
+  "runtime_action": {
+    "type": "joint_trajectory",
+    "controller": "velocity",
+    "duration_sec": 3.5
+  },
+  "critic_result": {
+    "success": false,
+    "failure_type": "grip_drop",
+    "reason": "Object slipped during lift; grip force insufficient"
+  },
+  "memory_write_result": {
+    "episodic_id": "memory_explain_evt_failure_001",
+    "procedural_id": "how_evt_failure_001",
+    "semantic_tags": ["grip_drop", "ur5e", "red_cube"]
+  },
+  "artifact_uri": "rosclaw://practice/runs/golden_pick_cube_failure",
+  "media": [
+    {
+      "kind": "video",
+      "path": "media/camera_rgb.mp4",
+      "mime_type": "video/mp4",
+      "start_t_rel": 0.0,
+      "end_t_rel": 42.5
+    }
+  ],
+  "curves": [
+    {
+      "name": "gripper_force",
+      "path": "states/gripper_force.jsonl",
+      "sample_count": 85,
+      "start_t_rel": 0.0,
+      "end_t_rel": 42.5
+    }
+  ],
+  "trajectory": {
+    "path": "states/trajectory.jsonl",
+    "sample_count": 425,
+    "start_t_rel": 0.0,
+    "end_t_rel": 42.5
+  },
+  "sandbox_states": [
+    { "t_rel": 0.0, "state": { "bin_A": { "red_cube": 1 }, "gripper": "open" } },
+    { "t_rel": 15.0, "state": { "bin_A": { "red_cube": 1 }, "gripper": "closed", "held_object": "red_cube" } },
+    { "t_rel": 40.0, "state": { "bin_A": { "red_cube": 0 }, "gripper": "closed", "held_object": "red_cube" } },
+    { "t_rel": 42.5, "state": { "bin_A": { "red_cube": 0 }, "gripper": "open", "held_object": null } }
+  ]
+}

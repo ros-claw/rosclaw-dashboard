@@ -7,13 +7,15 @@ import DashboardShell from '@/components/DashboardShell';
 export default function SafetyPage() {
   const [audits, setAudits] = useState<any[]>([]);
   const [rules, setRules] = useState<any[]>([]);
+  const [blocks, setBlocks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    Promise.all([api.safety.audits(), api.safety.rules()])
-      .then(([auditsData, rulesData]) => {
+    Promise.all([api.safety.audits(), api.safety.rules(), api.safety.blocks()])
+      .then(([auditsData, rulesData, blocksData]) => {
         setAudits(auditsData);
         setRules(rulesData);
+        setBlocks(blocksData.blocks || []);
       })
       .finally(() => setLoading(false));
   }, []);
@@ -64,6 +66,34 @@ export default function SafetyPage() {
                         >
                           Toggle
                         </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Firewall Blocks */}
+            <div className="bg-white rounded-lg border border-slate-200 p-4">
+              <h3 className="font-medium mb-3">Firewall Blocks ({blocks.length})</h3>
+              {blocks.length === 0 ? (
+                <p className="text-sm text-slate-500">No blocked actions recorded.</p>
+              ) : (
+                <div className="space-y-2">
+                  {blocks.map((block: any) => (
+                    <div key={block.id} className="flex items-center justify-between p-3 bg-red-50 border border-red-100 rounded">
+                      <div className="flex-1">
+                        <div className="font-medium text-sm text-red-900">{block.action_type || 'Blocked Action'}</div>
+                        <div className="text-xs text-slate-600">{block.robot_id} &bull; {block.run_id} &bull; {block.t_rel?.toFixed(2)}s</div>
+                        {block.reason && <div className="text-xs text-red-700 mt-1">Reason: {block.reason}</div>}
+                        {block.checks && (
+                          <div className="text-xs text-slate-500 mt-1">Checks: {Array.isArray(block.checks) ? block.checks.join(', ') : block.checks}</div>
+                        )}
+                        {block.risk_score !== undefined && <div className="text-xs text-slate-500">Risk: {block.risk_score}</div>}
+                      </div>
+                      <div className="text-right">
+                        <span className="px-2 py-0.5 rounded text-xs font-medium bg-red-200 text-red-800">BLOCK</span>
+                        {block.replay_id && <div className="text-xs font-mono text-slate-400 mt-1">{block.replay_id}</div>}
                       </div>
                     </div>
                   ))}

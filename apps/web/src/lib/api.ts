@@ -1,4 +1,23 @@
+import type {
+  TraceEvent,
+  RunSummary,
+  RunDetail,
+  ReplayManifest,
+  EventFilter,
+  ExportJobCreate,
+  ExportJobStatus,
+} from '@rosclaw/timeline-core';
+
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || '';
+
+function buildQuery(params?: Record<string, string | number | undefined>): string {
+  if (!params) return '';
+  const entries = Object.entries(params).filter(([, v]) => v !== undefined && v !== '');
+  if (entries.length === 0) return '';
+  const qs = new URLSearchParams();
+  for (const [k, v] of entries) qs.set(k, String(v));
+  return `?${qs.toString()}`;
+}
 
 async function fetchApi(path: string, options?: RequestInit) {
   const res = await fetch(`${API_BASE}${path}`, {
@@ -36,6 +55,10 @@ export const api = {
     abort: (id: string) => fetchApi(`/api/missions/${id}/abort`, { method: 'POST' }),
     trace: (id: string) => fetchApi(`/api/missions/${id}/trace`),
   },
+  skills: {
+    list: () => fetchApi('/api/skills'),
+    get: (id: string) => fetchApi(`/api/skills/${id}`),
+  },
   mcap: {
     list: () => fetchApi('/api/mcap'),
     get: (id: string) => fetchApi(`/api/mcap/${id}`),
@@ -46,10 +69,33 @@ export const api = {
   memory: {
     list: () => fetchApi('/api/memory'),
     stats: () => fetchApi('/api/memory/stats/summary'),
+    explain: (data: { question: string; run_id?: string; robot_id?: string }) =>
+      fetchApi('/api/memory/explain', { method: 'POST', body: JSON.stringify(data) }),
+  },
+  how: {
+    recovery: (data: { run_id: string; failure_event_id?: string }) =>
+      fetchApi('/api/how/recovery', { method: 'POST', body: JSON.stringify(data) }),
+  },
+  status: {
+    get: () => fetchApi('/api/status'),
+  },
+  mcp: {
+    tools: () => fetchApi('/api/mcp/tools'),
+    call: (tool: string, arguments_?: Record<string, any>) =>
+      fetchApi('/api/mcp/call', { method: 'POST', body: JSON.stringify({ tool, arguments: arguments_ || {} }) }),
+  },
+  forge: {
+    compile: (data: { sdk_doc: string; target?: string; staging?: boolean }) =>
+      fetchApi('/api/forge/compile', { method: 'POST', body: JSON.stringify(data) }) as Promise<any>,
+    validate: (data: { bundle_id: string; bundle: any }) =>
+      fetchApi('/api/forge/validate', { method: 'POST', body: JSON.stringify(data) }) as Promise<any>,
+    bundles: () => fetchApi('/api/forge/bundles') as Promise<{ bundles: any[] }>,
+    get: (bundle_id: string) => fetchApi(`/api/forge/bundles/${bundle_id}`) as Promise<any>,
   },
   safety: {
     audits: () => fetchApi('/api/safety/audits'),
     rules: () => fetchApi('/api/safety/rules'),
+    blocks: () => fetchApi('/api/safety/blocks') as Promise<{ blocks: any[] }>,
     toggleRule: (id: string) => fetchApi(`/api/safety/rules/${id}/toggle`, { method: 'POST' }),
   },
   providers: {
@@ -63,5 +109,66 @@ export const api = {
   runtime: {
     list: () => fetchApi('/api/runtime'),
     status: (id: string) => fetchApi(`/api/runtime/${id}/status`),
+  },
+  runs: {
+    list: (params?: { status?: string; search?: string; limit?: number; offset?: number }) =>
+      fetchApi(`/api/runs${buildQuery(params)}`),
+    get: (runId: string) => fetchApi(`/api/runs/${runId}`) as Promise<RunDetail>,
+    events: (
+      runId: string,
+      params?: { track?: string; type?: string; severity?: string; limit?: number; offset?: number },
+    ) => fetchApi(`/api/runs/${runId}/events${buildQuery(params)}`),
+    filterEvents: (runId: string, filter: EventFilter) =>
+      fetchApi(`/api/runs/${runId}/events/filter`, {
+        method: 'POST',
+        body: JSON.stringify(filter),
+      }),
+    searchEvents: (runId: string, eventId: string, windowSec = 5.0) =>
+      fetchApi(
+        `/api/runs/${runId}/events/search?event_id=${encodeURIComponent(eventId)}&window_sec=${windowSec}`,
+      ),
+    failures: (runId: string) => fetchApi(`/api/runs/${runId}/failures`),
+    replay: (runId: string) => fetchApi(`/api/runs/${runId}/replay`) as Promise<ReplayManifest>,
+    curves: (runId: string, curveName: string) =>
+      fetchApi(`/api/runs/${runId}/curves/${encodeURIComponent(curveName)}`),
+    trajectory: (runId: string) => fetchApi(`/api/runs/${runId}/trajectory`),
+    evidence: (runId: string) => fetchApi(`/api/runs/${runId}/evidence`),
+    failureEvidence: (runId: string, failureId: string) =>
+      fetchApi(`/api/runs/${runId}/failures/${encodeURIComponent(failureId)}/evidence`),
+    sandboxDecisions: (runId: string) => fetchApi(`/api/runs/${runId}/sandbox/decisions`),
+    memoryEvents: (runId: string) => fetchApi(`/api/runs/${runId}/memory/events`),
+    providerTraces: (runId: string) => fetchApi(`/api/runs/${runId}/provider/traces`),
+    howRecoveries: (runId: string) => fetchApi(`/api/runs/${runId}/how/recoveries`),
+    report: {
+      create: (runId: string) => fetchApi(`/api/runs/${runId}/report`, { method: 'POST' }) as Promise<any>,
+      get: (runId: string) => fetchApi(`/api/runs/${runId}/report`) as Promise<any>,
+      downloadUrl: (runId: string) => `${API_BASE}/api/runs/${runId}/report/download`,
+    },
+  },
+  live: {
+    list: () => fetchApi('/api/live/sessions') as Promise<{ sessions: any[]; total: number }>,
+    create: (data?: { robot_id?: string; task?: string; run_id?: string; config?: Record<string, any> }) =>
+      fetchApi('/api/live/sessions', { method: 'POST', body: JSON.stringify(data || {}) }),
+    get: (sessionId: string) => fetchApi(`/api/live/${sessionId}`),
+    attachRun: (sessionId: string, runId: string) =>
+      fetchApi(`/api/live/${sessionId}/attach-run`, { method: 'POST', body: JSON.stringify({ run_id: runId }) }),
+    close: (sessionId: string) =>
+      fetchApi(`/api/live/${sessionId}/close`, { method: 'POST' }) as Promise<any>,
+    wsUrl: (sessionId: string) => {
+      const base = API_BASE.replace(/^http/, 'ws');
+      return `${base}/api/live/${sessionId}/events`;
+    },
+  },
+  export: {
+    create: (data: ExportJobCreate) =>
+      fetchApi('/api/export', { method: 'POST', body: JSON.stringify(data) }) as Promise<ExportJobStatus>,
+    get: (jobId: string) => fetchApi(`/api/export/${jobId}`) as Promise<ExportJobStatus>,
+    list: (runId?: string) =>
+      fetchApi(`/api/export${buildQuery({ run_id: runId, limit: 100, offset: 0 })}`),
+    downloadUrl: (jobId: string) => `${API_BASE}/api/export/${jobId}/download`,
+  },
+  media: {
+    url: (runId: string, path: string) =>
+      `${API_BASE}/api/runs/${runId}/media/${encodeURIComponent(path)}`,
   },
 };
