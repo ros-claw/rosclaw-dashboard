@@ -180,6 +180,18 @@ class ReplaySession(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
+class LiveSession(Base):
+    __tablename__ = "live_sessions"
+
+    session_id = Column(String, primary_key=True, index=True)
+    run_id = Column(String, nullable=True, index=True)
+    status = Column(String, default="live")  # live | closing | closed | offline
+    config_json = Column(Text)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    closed_at = Column(DateTime)
+    offline_run_id = Column(String, nullable=True)
+
+
 class ExportJob(Base):
     __tablename__ = "export_jobs"
 

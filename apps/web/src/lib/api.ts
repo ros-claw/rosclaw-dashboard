@@ -132,6 +132,32 @@ export const api = {
     curves: (runId: string, curveName: string) =>
       fetchApi(`/api/runs/${runId}/curves/${encodeURIComponent(curveName)}`),
     trajectory: (runId: string) => fetchApi(`/api/runs/${runId}/trajectory`),
+    evidence: (runId: string) => fetchApi(`/api/runs/${runId}/evidence`),
+    failureEvidence: (runId: string, failureId: string) =>
+      fetchApi(`/api/runs/${runId}/failures/${encodeURIComponent(failureId)}/evidence`),
+    sandboxDecisions: (runId: string) => fetchApi(`/api/runs/${runId}/sandbox/decisions`),
+    memoryEvents: (runId: string) => fetchApi(`/api/runs/${runId}/memory/events`),
+    providerTraces: (runId: string) => fetchApi(`/api/runs/${runId}/provider/traces`),
+    howRecoveries: (runId: string) => fetchApi(`/api/runs/${runId}/how/recoveries`),
+    report: {
+      create: (runId: string) => fetchApi(`/api/runs/${runId}/report`, { method: 'POST' }) as Promise<any>,
+      get: (runId: string) => fetchApi(`/api/runs/${runId}/report`) as Promise<any>,
+      downloadUrl: (runId: string) => `${API_BASE}/api/runs/${runId}/report/download`,
+    },
+  },
+  live: {
+    list: () => fetchApi('/api/live/sessions') as Promise<{ sessions: any[]; total: number }>,
+    create: (data?: { robot_id?: string; task?: string; run_id?: string; config?: Record<string, any> }) =>
+      fetchApi('/api/live/sessions', { method: 'POST', body: JSON.stringify(data || {}) }),
+    get: (sessionId: string) => fetchApi(`/api/live/${sessionId}`),
+    attachRun: (sessionId: string, runId: string) =>
+      fetchApi(`/api/live/${sessionId}/attach-run`, { method: 'POST', body: JSON.stringify({ run_id: runId }) }),
+    close: (sessionId: string) =>
+      fetchApi(`/api/live/${sessionId}/close`, { method: 'POST' }) as Promise<any>,
+    wsUrl: (sessionId: string) => {
+      const base = API_BASE.replace(/^http/, 'ws');
+      return `${base}/api/live/${sessionId}/events`;
+    },
   },
   export: {
     create: (data: ExportJobCreate) =>

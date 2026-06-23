@@ -4,12 +4,13 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { api } from '@/lib/api';
 import DashboardShell from '@/components/DashboardShell';
+import ModeBadge from '@/components/ModeBadge';
 
 interface SystemStatus {
   overall: string;
   service: string;
   version: string;
-  modules: { name: string; status: string; detail: any }[];
+  modules: { name: string; status: string; mode: string; message?: string; detail: any }[];
 }
 
 export default function RobotRegistryPage() {
@@ -52,8 +53,15 @@ export default function RobotRegistryPage() {
             </div>
             <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
               {status.modules.map((mod) => (
-                <div key={mod.name} className="text-xs p-2 bg-slate-50 rounded border border-slate-100">
-                  <div className="font-medium text-slate-700">{mod.name}</div>
+                <div
+                  key={mod.name}
+                  className="text-xs p-2 bg-slate-50 rounded border border-slate-100"
+                  title={mod.message || ''}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium text-slate-700">{mod.name}</span>
+                    <ModeBadge mode={mod.mode} />
+                  </div>
                   <div className={mod.status === 'healthy' ? 'text-emerald-600' : 'text-amber-600'}>
                     {mod.status}
                   </div>

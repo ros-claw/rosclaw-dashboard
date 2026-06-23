@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { api } from '@/lib/api';
 import type { ExportJobCreate, ExportJobStatus } from '@rosclaw/timeline-core';
 
@@ -60,6 +61,13 @@ export default function ExportPanel({ runId }: ExportPanelProps) {
             </button>
           ))}
         </div>
+
+        <Link
+          href={`/runs/${runId}/report`}
+          className="block w-full text-center px-3 py-2 rounded border border-rosclaw-200 text-rosclaw-700 text-sm hover:bg-rosclaw-50"
+        >
+          Acceptance Report
+        </Link>
 
         {jobs.length > 0 && (
           <div className="space-y-2">

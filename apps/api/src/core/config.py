@@ -13,6 +13,8 @@ class Settings(BaseSettings):
     robots_data_path: str = "../../robots"
     practice_dir: Path = Path.home() / ".rosclaw" / "practice" / "runs"
     export_dir: Path = Path.home() / ".rosclaw" / "dashboard" / "exports"
+    events_dir: Path = Path.home() / ".rosclaw" / "events"
+    report_dir: Path = Path.home() / ".rosclaw" / "dashboard" / "reports"
 
     class Config:
         env_prefix = "ROSCLAW_"

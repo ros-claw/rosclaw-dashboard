@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import Link from 'next/link';
 import TraceTimeline from './TraceTimeline';
 import type { TraceEvent } from '@rosclaw/timeline-core';
 
@@ -8,6 +9,7 @@ interface LiveTracePanelProps {
   events: TraceEvent[];
   connected: boolean;
   error: string | null;
+  offlineRunId: string | null;
   onClose: () => void;
 }
 
@@ -15,6 +17,7 @@ export default function LiveTracePanel({
   events,
   connected,
   error,
+  offlineRunId,
   onClose,
 }: LiveTracePanelProps) {
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
@@ -57,6 +60,18 @@ export default function LiveTracePanel({
           Stop
         </button>
       </div>
+
+      {offlineRunId && (
+        <div className="bg-emerald-50 border border-emerald-200 rounded px-3 py-2 text-sm">
+          <span className="text-emerald-700">Session archived as run </span>
+          <Link
+            href={`/runs/${offlineRunId}`}
+            className="font-medium text-emerald-800 hover:underline"
+          >
+            {offlineRunId}
+          </Link>
+        </div>
+      )}
 
       <TraceTimeline
         events={events}

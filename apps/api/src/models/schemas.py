@@ -1,4 +1,5 @@
 from datetime import datetime
+from enum import Enum
 from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict
@@ -192,6 +193,62 @@ class RobotImportRequest(BaseModel):
     directory: str
 
 
+# ── Runtime Evidence Center schemas ─────────────────────────────────────────
+
+ModuleMode = Literal[
+    "real", "mock", "fixture", "rule_based", "unavailable", "degraded"
+]
+
+
+class ModuleStatus(BaseModel):
+    name: str
+    status: str  # healthy / degraded / unavailable
+    mode: ModuleMode
+    message: str | None = None
+    endpoint: str | None = None
+    last_updated: float | None = None
+    evidence: dict[str, Any] | None = None
+
+
+class LiveSessionCreate(BaseModel):
+    robot_id: str | None = None
+    task: str | None = None
+    run_id: str | None = None
+    config: dict[str, Any] | None = None
+
+
+class LiveSessionResponse(BaseModel):
+    session_id: str
+    run_id: str | None = None
+    status: str
+    config: dict[str, Any] | None = None
+    created_at: float | None = None
+    closed_at: float | None = None
+    offline_run_id: str | None = None
+
+
+class LiveSessionListResponse(BaseModel):
+    sessions: list[LiveSessionResponse]
+    total: int
+
+
+class RosclawEventEnvelope(BaseModel):
+    """Unified envelope for runtime events emitted by ROSClaw modules.
+
+    Dashboard adapters consume this envelope and normalize it into TraceEvent.
+    """
+
+    event_id: str
+    trace_id: str | None = None
+    run_id: str | None = None
+    source: str
+    type: str
+    ts: float
+    severity: str = "info"
+    payload: dict[str, Any] | None = None
+    schema_version: str = "1.0"
+
+
 # ── Physical Trace Viewer schemas ───────────────────────────────────────────
 
 TraceTrack = Literal[
@@ -318,6 +375,100 @@ class ReplayManifest(BaseModel):
     trajectory: ReplayManifestTrajectory | None = None
     sandbox_states: list[dict[str, Any]] | None = None
     tracks: list[str] = []
+
+
+# ── Evidence graph schemas ──────────────────────────────────────────────────
+
+class EvidenceNode(BaseModel):
+    id: str
+    type: str
+    track: str
+    label: str
+    t_rel: float
+    severity: str = "info"
+    payload: dict[str, Any] | None = None
+
+
+class EvidenceEdge(BaseModel):
+    source: str
+    target: str
+    relation: str
+
+
+class EvidenceGraph(BaseModel):
+    run_id: str
+    focus_event_id: str | None = None
+    nodes: list[EvidenceNode]
+    edges: list[EvidenceEdge]
+
+
+class SandboxDecision(BaseModel):
+    event_id: str
+    t_rel: float
+    decision: str
+    reason: str | None = None
+    risk_score: float | None = None
+    entity: str | None = None
+    payload: dict[str, Any] | None = None
+
+
+class MemoryEvent(BaseModel):
+    event_id: str
+    t_rel: float
+    memory_type: str
+    entity: str | None = None
+    summary: str | None = None
+    payload: dict[str, Any] | None = None
+
+
+class ProviderRouteTrace(BaseModel):
+    event_id: str
+    t_rel: float
+    provider: str | None = None
+    latency_ms: float | None = None
+    decision: str | None = None
+    payload: dict[str, Any] | None = None
+
+
+class HowRecovery(BaseModel):
+    event_id: str
+    t_rel: float
+    recovery_type: str
+    suggestion: str | None = None
+    payload: dict[str, Any] | None = None
+
+
+class AcceptanceVerdict(str, Enum):
+    PASS = "PASS"
+    PARTIAL = "PARTIAL"
+    FAIL = "FAIL"
+
+
+class AcceptanceReportSection(BaseModel):
+    title: str
+    status: str  # pass | partial | fail | info
+    findings: list[str]
+    evidence: dict[str, Any] | None = None
+
+
+class AcceptanceReportArtifact(BaseModel):
+    name: str
+    path: str
+    mime_type: str
+
+
+class AcceptanceReport(BaseModel):
+    run_id: str
+    generated_at: float
+    verdict: AcceptanceVerdict
+    summary: str
+    sections: list[AcceptanceReportSection]
+    artifacts: list[AcceptanceReportArtifact]
+
+
+class AcceptanceReportResponse(BaseModel):
+    report: AcceptanceReport
+    download_url: str | None = None
 
 
 class ExportJobCreate(BaseModel):

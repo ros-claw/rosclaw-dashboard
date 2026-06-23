@@ -8,6 +8,7 @@ import DashboardShell from '@/components/DashboardShell';
 import TraceTimeline from '@/components/trace/TraceTimeline';
 import EventDetailPanel from '@/components/trace/EventDetailPanel';
 import FailureAnalysisPanel from '@/components/trace/FailureAnalysisPanel';
+import EvidenceChain from '@/components/trace/EvidenceChain';
 import ExportPanel from '@/components/export/ExportPanel';
 import VideoPanel from '@/components/replay/VideoPanel';
 import CurvesPanel from '@/components/replay/CurvesPanel';
@@ -211,6 +212,7 @@ export default function RunTracePage() {
 
           <div className="space-y-4">
               <FailureAnalysisPanel runId={runId} events={events} />
+              <EvidenceChain runId={runId} />
               <EventDetailPanel
                 event={events.find((e) => e.id === selectedEventId) || null}
               />

@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from core.config import settings
 from models.database import init_db
-from routers import robots_router, missions_router, mcap_router, skills_router, memory_router, safety_router, events_router, runtime_router, providers_router, episodes_router, runs_router, export_router, status_router, mcp_router, how_router, forge_router
+from routers import robots_router, missions_router, mcap_router, skills_router, memory_router, safety_router, events_router, runtime_router, providers_router, episodes_router, runs_router, export_router, status_router, mcp_router, how_router, forge_router, live_router, evidence_router, report_router
 
 app = FastAPI(
     title=settings.app_name,
@@ -37,6 +37,9 @@ app.include_router(status_router, prefix="/api")
 app.include_router(mcp_router, prefix="/api")
 app.include_router(how_router, prefix="/api")
 app.include_router(forge_router, prefix="/api")
+app.include_router(live_router, prefix="/api")
+app.include_router(evidence_router, prefix="/api")
+app.include_router(report_router, prefix="/api")
 
 
 @app.on_event("startup")
@@ -46,11 +49,14 @@ async def on_startup():
     from sqlalchemy.orm import Session
     from models.database import get_db, Robot
     from services.agent_daemon import get_or_create_daemon
+    from services.live_session_manager import get_live_session_manager
     db = next(get_db())
     robots = db.query(Robot).all()
     for robot in robots:
         daemon = get_or_create_daemon(robot.id)
         await daemon.start()
+    manager = get_live_session_manager()
+    manager.start()
 
 
 @app.get("/health", tags=["health"])

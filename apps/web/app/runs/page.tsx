@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { api } from '@/lib/api';
 import DashboardShell from '@/components/DashboardShell';
@@ -17,7 +17,8 @@ export default function RunsPage() {
   const [status, setStatus] = useState('all');
   const [search, setSearch] = useState('');
   const [live, setLive] = useState(false);
-  const { events, status: liveStatus, start, stop } = useLiveTrace();
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const { events, status: liveStatus, start, stop, clear } = useLiveTrace(sessionId);
 
   useEffect(() => {
     api.runs
@@ -32,13 +33,37 @@ export default function RunsPage() {
       });
   }, []);
 
-  useEffect(() => {
+  const toggleLive = useCallback(async () => {
     if (live) {
-      start();
-    } else {
+      if (sessionId) {
+        try {
+          await api.live.close(sessionId);
+        } catch {
+          // ignore close errors
+        }
+      }
       stop();
+      setSessionId(null);
+      setLive(false);
+      return;
     }
-  }, [live, start, stop]);
+    clear();
+    try {
+      const session = await api.live.create({ robot_id: 'dashboard', task: 'live trace' });
+      setSessionId(session.session_id);
+      setLive(true);
+    } catch (err: any) {
+      setError(err.message || 'Failed to start live session');
+    }
+  }, [live, sessionId, stop, clear]);
+
+  // Refresh runs list after a session is archived.
+  useEffect(() => {
+    if (!liveStatus.offlineRunId) return;
+    api.runs.list({ limit: 500 }).then((res: { runs: RunSummary[]; total: number }) => {
+      setRuns(res.runs);
+    });
+  }, [liveStatus.offlineRunId]);
 
   const filtered = useMemo(() => {
     const term = search.trim().toLowerCase();
@@ -94,7 +119,7 @@ export default function RunsPage() {
           </div>
           <div className="flex items-center gap-3">
             <button
-              onClick={() => setLive((v) => !v)}
+              onClick={toggleLive}
               className={`px-3 py-2 rounded text-sm font-medium border ${
                 live
                   ? 'bg-rose-50 border-rose-200 text-rose-700'
@@ -114,7 +139,8 @@ export default function RunsPage() {
             events={events}
             connected={liveStatus.connected}
             error={liveStatus.error}
-            onClose={() => setLive(false)}
+            offlineRunId={liveStatus.offlineRunId}
+            onClose={() => toggleLive()}
           />
         )}
 
