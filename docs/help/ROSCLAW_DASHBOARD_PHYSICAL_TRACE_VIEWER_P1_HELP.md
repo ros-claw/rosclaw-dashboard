@@ -189,7 +189,7 @@
 3. **真实仿真 fixture**：是否有现成的 MuJoCo / Isaac Sim 场景和机器人模型可以接入 Dashboard 做集成测试？目前只有 JSON fixture。
 4. **Provider Router 实现**：`rosclaw-provider` 是否有独立 repo 或接口定义？Dashboard 的 `/api/mcp/call` 现在只能列出 mock provider，需要真实路由契约。
 5. **是否继续补 dashboard 内部能力**：在 L3 真实任务还跑不通的情况下，是否优先把 dashboard 内的 Know、Event Bus Monitor、Provider Health、E2E 补齐，还是先等外部模块 ready？
-6. **rosclaw 主仓库集成提交**：rosclaw 侧改动（JsonlEventSink、dashboard launcher、optional dependency）已在本地副本提交为 `19ae1d0`，尚未推送到主仓库。待你确认后再推送。
+6. **rosclaw 主仓库集成提交**：rosclaw 侧改动（JsonlEventSink、dashboard launcher、optional dependency）已推送到主仓库，最新提交 `e29f69d`。
 7. **FEEDBACK 文件处理**：`FEEDBACK` 文件内容为空（仅 1 行）。是否需要我在其中补充本次验收缺口，还是它由你维护？
 
 ---
