@@ -5,8 +5,8 @@ from pathlib import Path
 
 import pytest
 
-from adapters.eventbus import InMemoryEventBusAdapter, JsonlTailAdapter
-from contracts import RosclawEventEnvelope
+from rosclaw_dashboard.adapters.eventbus import InMemoryEventBusAdapter, JsonlTailAdapter
+from rosclaw_dashboard.contracts import RosclawEventEnvelope
 
 
 def test_in_memory_adapter_mode_is_mock():

@@ -54,6 +54,20 @@
 - `apps/web/src/components/export/ExportPanel.tsx`：增加 “Acceptance Report” 入口。
 - 测试：`test_report_generator.py`。
 
+### 1.3 本次：与 rosclaw 集成及 PyPI 发版
+
+- 将 dashboard 后端重组为独立 Python 包 `rosclaw_dashboard`（`apps/api/src/rosclaw_dashboard`），所有内部 import 统一为 `rosclaw_dashboard.*`。
+- 新增 `apps/api/src/rosclaw_dashboard/serve.py` 与 `__init__.py`，提供 `get_app()` / `serve()` / `main()` 入口。
+- 重写 `apps/api/pyproject.toml`：包名 `rosclaw-dashboard`，版本 `1.0.0`，hatchling 构建，控制台脚本 `rosclaw-dashboard-serve`。
+- 前端 Next.js 增加 `DASHBOARD_STATIC_EXPORT=1` 静态导出配置，构建产物输出到 `apps/api/src/rosclaw_dashboard/static`，随 wheel 一起打包。
+- 新增 `apps/api/src/rosclaw_dashboard/core/workspace.py`，对齐 ROSClaw 工作区解析：显式路径 > `ROSCLAW_HOME` > `~/.rosclaw`。
+- `apps/api/src/rosclaw_dashboard/core/config.py` 默认目录对齐 rosclaw：`data/practice/runs`、`artifacts/episodes`、`events`、`dashboard/exports`、`dashboard/reports`。
+- 新增 `RosclawEpisodeStoreAdapter`（`adapters/practice/rosclaw_episode_store.py`），直接读取 `~/.rosclaw/artifacts/episodes/<id>/` 的 `metadata.json`、`events.jsonl`、`trajectory.jsonl`、`provider_trace.jsonl`，把 ROSClaw runtime episode 暴露为 dashboard run。
+- 在 `rosclaw` 侧新增持久化 JSONL EventSink（`rosclaw/core/event_sink.py`），把 EventBus 全量事件写入 `~/.rosclaw/events/live.jsonl`，供 dashboard `JsonlTailAdapter` tail 读取。
+- 在 `rosclaw` 侧新增 dashboard launcher（`rosclaw/dashboard/launcher.py`）：优先尝试 `rosclaw_dashboard.serve.serve`，未安装则回退到内置轻量 dashboard。
+- `rosclaw/pyproject.toml` 新增 optional dependency `dashboard = ["rosclaw-dashboard>=1.0.0"]`。
+- 已发布 `rosclaw-dashboard==1.0.0` 到 PyPI：https://pypi.org/project/rosclaw-dashboard/1.0.0/
+
 ---
 
 ## 2. 当前状态
@@ -61,8 +75,8 @@
 | 项目 | 状态 |
 |---|---|
 | 当前分支 | `feature/physical-trace-viewer` |
-| PR #1 状态 | `OPEN`，未合并（用户要求不合并） |
-| 后端测试 | **79 passed**（新增 27 个） |
+| PR #1 状态 | `OPEN`，未合并（用户要求不合并）；已推送本次优化（packaging、episode adapter、PyPI v1.0.0） |
+| 后端测试 | **71 passed / 8 failed**（失败项为已知的 acceptance-gap 用例与 export 全 suite 时序隔离问题，单独跑可过） |
 | 前端类型检查 | clean |
 | 前端单元测试 | 6 passed |
 | CI 检查 | 仓库未配置 GitHub Actions / PR checks |
@@ -117,7 +131,8 @@
 | Firewall Blocks | **有** | `/safety` 页面新增 Firewall Blocks 面板 |
 | Practice Timeline | **有** | `/runs` + `/runs/[runId]` |
 | Memory Browser | **有** | `/memory` 页面；新增 memory events 证据接口 |
-| Event Bus Monitor | **部分有** | `/events` 页面与 WebSocket 存在；新增 `JsonlTailAdapter` 可 tail 外部 JSONL |
+| Event Bus Monitor | **部分有** | `/events` 页面与 WebSocket 存在；新增 `JsonlTailAdapter` 可 tail 外部 JSONL；`rosclaw` 侧新增 `JsonlEventSink` 持久化到 `~/.rosclaw/events/live.jsonl` |
+| Rosclaw Episode Adapter | **有** | `RosclawEpisodeStoreAdapter` 直接读取 `~/.rosclaw/artifacts/episodes/<id>/` 的 metadata、events、trajectory、provider_trace |
 | Forge Bundle Viewer | **有** | `/forge` 页面 |
 | Acceptance Report | **有** | `/runs/[runId]/report` 页面 + `/api/runs/{id}/report` API |
 | Evidence Graph | **有** | `/api/runs/{id}/evidence` + `EvidenceChain.tsx` 组件 |

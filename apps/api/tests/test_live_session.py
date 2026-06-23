@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from services.live_session_manager import LiveSessionManager
+from rosclaw_dashboard.services.live_session_manager import LiveSessionManager
 
 
 @pytest.fixture(autouse=True)

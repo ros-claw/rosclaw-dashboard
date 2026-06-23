@@ -182,7 +182,7 @@ async def test_mcp_call_list_runs_and_failures(client, run_id):
 
 @pytest.mark.asyncio
 async def test_mcp_call_run_sandbox_task_decision(client):
-    from models.database import SessionLocal, Robot
+    from rosclaw_dashboard.models.database import SessionLocal, Robot
 
     robot_resp = client.post("/api/robots", json={
         "id": "sandbox_bot",

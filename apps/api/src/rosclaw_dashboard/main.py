@@ -1,0 +1,64 @@
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+from rosclaw_dashboard.core.config import settings
+from rosclaw_dashboard.models.database import init_db
+from rosclaw_dashboard.routers import robots_router, missions_router, mcap_router, skills_router, memory_router, safety_router, events_router, runtime_router, providers_router, episodes_router, runs_router, export_router, status_router, mcp_router, how_router, forge_router, live_router, evidence_router, report_router
+
+app = FastAPI(
+    title=settings.app_name,
+    description="ROSClaw Dashboard API — e-URDF-native Physical AI control plane",
+    version="0.1.0",
+    docs_url="/docs",
+    redoc_url="/redoc",
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.cors_origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+app.include_router(robots_router, prefix="/api")
+app.include_router(missions_router, prefix="/api")
+app.include_router(mcap_router, prefix="/api")
+app.include_router(skills_router, prefix="/api")
+app.include_router(memory_router, prefix="/api")
+app.include_router(safety_router, prefix="/api")
+app.include_router(events_router, prefix="/api")
+app.include_router(runtime_router, prefix="/api")
+app.include_router(providers_router, prefix="/api")
+app.include_router(episodes_router, prefix="/api")
+app.include_router(runs_router, prefix="/api")
+app.include_router(export_router, prefix="/api")
+app.include_router(status_router, prefix="/api")
+app.include_router(mcp_router, prefix="/api")
+app.include_router(how_router, prefix="/api")
+app.include_router(forge_router, prefix="/api")
+app.include_router(live_router, prefix="/api")
+app.include_router(evidence_router, prefix="/api")
+app.include_router(report_router, prefix="/api")
+
+
+@app.on_event("startup")
+async def on_startup():
+    init_db()
+    # Auto-start agent daemons for all registered robots
+    from sqlalchemy.orm import Session
+    from rosclaw_dashboard.models.database import get_db, Robot
+    from rosclaw_dashboard.services.agent_daemon import get_or_create_daemon
+    from rosclaw_dashboard.services.live_session_manager import get_live_session_manager
+    db = next(get_db())
+    robots = db.query(Robot).all()
+    for robot in robots:
+        daemon = get_or_create_daemon(robot.id)
+        await daemon.start()
+    manager = get_live_session_manager()
+    manager.start()
+
+
+@app.get("/health", tags=["health"])
+def health_check():
+    return {"status": "ok", "version": "0.1.0", "service": "rosclaw-api"}

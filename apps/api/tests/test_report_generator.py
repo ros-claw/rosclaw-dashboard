@@ -2,7 +2,7 @@
 
 import pytest
 
-from services.report_generator import generate_acceptance_report
+from rosclaw_dashboard.services.report_generator import generate_acceptance_report
 
 
 @pytest.mark.asyncio

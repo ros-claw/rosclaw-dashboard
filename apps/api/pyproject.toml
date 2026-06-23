@@ -1,7 +1,16 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
 [project]
-name = "rosclaw-api"
-version = "0.1.0"
-description = "ROSClaw Dashboard API — FastAPI backend for robot orchestration"
+name = "rosclaw-dashboard"
+version = "1.0.0"
+description = "Full-featured ROSClaw Dashboard — Next.js frontend + FastAPI backend"
+readme = "README.md"
+license = {text = "MIT"}
+authors = [
+    {name = "ROSClaw Team", email = "ai@rosclaw.io"},
+]
 requires-python = ">=3.11"
 dependencies = [
     "fastapi>=0.115.0",
@@ -26,6 +35,22 @@ dev = [
     "ruff>=0.8.0",
 ]
 
+[project.scripts]
+rosclaw-dashboard-serve = "rosclaw_dashboard.serve:main"
+
+[project.urls]
+Homepage = "https://rosclaw.io"
+Repository = "https://github.com/ros-claw/rosclaw-dashboard"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/rosclaw_dashboard"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "/src/rosclaw_dashboard",
+    "/tests",
+]
+
 [tool.ruff]
 line-length = 100
 target-version = "py311"
@@ -36,3 +61,4 @@ select = ["E", "F", "I", "N", "W", "UP", "B", "C4", "SIM"]
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
+pythonpath = ["src"]

@@ -23,8 +23,8 @@ def _configure_test_settings():
     os.environ["ROSCLAW_EXPORT_DIR"] = "/tmp/rosclaw-test-exports"
 
     # Import here so the env vars above are respected; init_db is idempotent.
-    from main import app  # noqa: F401
-    from models.database import init_db
+    from rosclaw_dashboard.main import app  # noqa: F401
+    from rosclaw_dashboard.models.database import init_db
 
     init_db()
 
@@ -37,7 +37,7 @@ def _clean_export_dir(tmp_path_factory, monkeypatch):
 
     # Re-bind the lazy module-level EXPORT_DIR if already imported.
     try:
-        from services import export_jobs
+        from rosclaw_dashboard.services import export_jobs
         export_jobs.EXPORT_DIR = export_dir
     except Exception:
         pass
@@ -56,8 +56,8 @@ def client():
     if str(src) not in sys.path:
         sys.path.insert(0, str(src))
     from fastapi.testclient import TestClient
-    from main import app
-    from models.database import init_db
+    from rosclaw_dashboard.main import app
+    from rosclaw_dashboard.models.database import init_db
     init_db()
     with TestClient(app) as c:
         yield c

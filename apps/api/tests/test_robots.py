@@ -6,8 +6,8 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
-from src.main import app
-from src.models.database import Base, Robot, get_db
+from rosclaw_dashboard.main import app
+from rosclaw_dashboard.models.database import Base, Robot, get_db
 
 SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
 engine = create_engine(

@@ -8,10 +8,10 @@ from pathlib import Path
 
 import pytest
 
-from adapters.eventbus import InMemoryEventBusAdapter
-from adapters.practice import LocalPracticeStoreAdapter
-from contracts import RosclawEventEnvelope
-from services.live_session_manager import LiveSessionManager
+from rosclaw_dashboard.adapters.eventbus import InMemoryEventBusAdapter
+from rosclaw_dashboard.adapters.practice import LocalPracticeStoreAdapter
+from rosclaw_dashboard.contracts import RosclawEventEnvelope
+from rosclaw_dashboard.services.live_session_manager import LiveSessionManager
 
 
 @pytest.fixture

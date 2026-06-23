@@ -2,7 +2,7 @@
 
 import pytest
 
-from contracts import (
+from rosclaw_dashboard.contracts import (
     ModuleMode,
     ModuleStatus,
     RosclawEventEnvelope,

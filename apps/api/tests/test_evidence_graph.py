@@ -2,7 +2,7 @@
 
 import pytest
 
-from services.evidence_graph import (
+from rosclaw_dashboard.services.evidence_graph import (
     build_evidence_graph,
     get_how_recoveries,
     get_memory_events,
